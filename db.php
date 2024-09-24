@@ -1,0 +1,22 @@
+<?php
+class Database {
+    private $db = "login_system";
+    private $ip = "192.168.1.17";
+    private $port = "3306";
+    private $username = "celular";
+    private $password = "Coemsa.2024";
+    private $conn;
+
+    public function connect() {
+        try {
+            $dsn = "mysql:host={$this->ip};port={$this->port};dbname={$this->db}";
+            $this->conn = new PDO($dsn, $this->username, $this->password);
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $this->conn;
+        } catch (PDOException $e) {
+            echo "Connection failed: " . $e->getMessage();
+            return null;
+        }
+    }
+}
+?>

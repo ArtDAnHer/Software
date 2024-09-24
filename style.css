@@ -1,0 +1,136 @@
+/* Estilos generales de la página */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #e9ecef;
+}
+
+/* Encabezado con menú */
+header {
+    background-color: #333;
+    padding: 10px 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000; /* Asegura que el encabezado esté por encima del contenido */
+}
+
+nav {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+}
+
+nav .left-section,
+nav .center-section,
+nav .right-section {
+    flex: 1;
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+}
+
+nav ul li {
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+nav ul li a:hover {
+    text-decoration: underline;
+}
+
+/* Contenedor para el contenido principal */
+.container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin-top: 80px; /* Para evitar que el contenedor se sobreponga con el menú */
+}
+
+h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+a {
+    color: black;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+a:hover {
+    color: black;
+    text-decoration: underline;
+    font-size: 20px;
+}
+
+/* Dividir pantalla 30% 70% */
+.split-container {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 80px); /* Ajustar el alto para no sobrepasar la pantalla */
+    margin-top: 80px; /* Ajustar el margen superior por el menú */
+}
+
+/* Sección izquierda (25%) */
+.left-section-split {
+    flex: 0 0 25%;
+    background-color: #f0f0f0;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+
+/* Sección derecha (75%) */
+.right-section-split {
+    flex: 0 0 75%;
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+
+/* Contenedor de la tabla con scroll */
+.table-container {
+    max-height: 500px; /* Ajusta esta altura según sea necesario */
+    overflow-y: auto;
+    border: 1px solid black;
+    margin-top: 20px; /* Ajusta el margen superior según sea necesario */
+}
+
+/* Estilos para la tabla y su encabezado */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    text-align: center;
+}
+
+thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f2f2f2; /* Color de fondo para el encabezado */
+    z-index: 2; /* Asegura que el encabezado esté sobre el contenido */
+}
