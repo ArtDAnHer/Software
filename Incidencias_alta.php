@@ -73,7 +73,7 @@
             font-size: 0.9em;
         }
     </style>
-    jhuj
+    
 </head>
 <body>
     <h2>Alta de incidencia</h2>

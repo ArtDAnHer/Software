@@ -15,6 +15,9 @@ if (isset($_GET['page'])) {
         case 'alta':
             $fileToInclude = 'usuario_alta.php';
             break;
+        case 'estacionamientos':
+            $fileToInclude = 'plaza_alta.php';
+            break;
         default:
             $fileToInclude = 'usuario_info.php';
             break;
@@ -45,10 +48,14 @@ if (isset($_GET['page'])) {
             </div>
             <hr>
             <h4>Usuario</h4>
-            <br>
             <div>
                 °<a href="?page=ver">Inicio</a><br>
                 °<a href="?page=alta">Alta</a><br>
+            </div>
+            <br>
+            <h4>Estacionamientos</h4>
+            <div>
+                °<a href="?page=estacionamientos">Estacionamientos</a><br>
             </div>
         </div>
 

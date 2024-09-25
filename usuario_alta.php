@@ -142,6 +142,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             color: red;
             font-size: 0.9em;
         }
+
+        form input[type="text"],
+        form input[type="number"],
+        form input[type="email"],
+        form input[type="date"], /* Añadir esta línea */
+        form select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
     </style>
 </head>
 <body>
