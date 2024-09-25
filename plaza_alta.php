@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </style>
 </head>
 <body>
-    <h2>Alta de Plaza</h2>
+    <h2>Alta de estacionamiento</h2>
     <hr>
     <form method="POST" action="">
 
