@@ -36,6 +36,7 @@ class Database {
 // Manejo del formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
+        'id' => $_POST['id'],
         'estacionamiento' => $_POST['estacionamiento'],
         'direccion' => $_POST['direccion']
     ];
@@ -101,13 +102,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         form button:hover {
             background-color: #218838;
-        }clearstatcache
+        }
     </style>
 </head>
 <body>
-    <h2>Alta de estacionamiento</h2>
+    <h2>Alta de Plaza</h2>
     <hr>
     <form method="POST" action="">
+        <label for="id">ID</label>
+        <input type="number" name="id" id="id" required><br>
 
         <label for="estacionamiento">Nombre del Estacionamiento</label>
         <input type="text" name="estacionamiento" id="estacionamiento" required><br>
@@ -117,5 +120,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <button type="submit">Registrar Plaza</button>
     </form>
-</body>
+ </body>
 </html>

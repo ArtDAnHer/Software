@@ -16,47 +16,46 @@ class Database {
         }
     }
 
-    public function insertEntry($data) {
-        $fechaAlta = date('Y-m-d H:i:s');
-        
-        $sql = "INSERT INTO usuarios_empresa (nombre, email, telefono, direccion, fecha_registro, rol, estado, fecha_nacimiento, departamento) 
-        VALUES (:nombre, :email, :telefono, :direccion, :fecha_registro, :rol, :estado, :fecha_nacimiento, :departamento)";
-
+    public function getPlazas() {
+        $sql = "SELECT * FROM estacionamiento";
         $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-        // Enlazar los parámetros con los valores del array $data
-        $stmt->bindParam(':nombre', $data['nombre']);
-        $stmt->bindParam(':email', $data['email']);
-        $stmt->bindParam(':telefono', $data['telefono']);
+    public function updatePlaza($data) {
+        $sql = "UPDATE estacionamiento SET estacionamiento = :estacionamiento, direccion = :direccion WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':estacionamiento', $data['estacionamiento']);
         $stmt->bindParam(':direccion', $data['direccion']);
-        $stmt->bindParam(':fecha_registro', $fechaAlta); // Usar fecha actual para 'fecha_registro'
-        $stmt->bindParam(':rol', $data['rol']);
-        $stmt->bindParam(':estado', $data['estado']);
-        $stmt->bindParam(':fecha_nacimiento', $data['fecha_nacimiento']);
-        $stmt->bindParam(':departamento', $data['departamento']);
-        
-        if ($stmt->execute()) {
-            echo "Usuario registrado exitosamente.";
-        } else {
-            echo "Error al registrar el usuario.";
-        }
+        return $stmt->execute();
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+// Manejo del formulario de actualización
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update'])) {
     $data = [
-        'nombre' => $_POST['nombre'],
-        'email' => $_POST['email'],
-        'telefono' => $_POST['telefono'],
-        'direccion' => $_POST['direccion'],
-        'rol' => $_POST['rol'],
-        'estado' => $_POST['estado'],
-        'fecha_nacimiento' => $_POST['fecha_nacimiento'],
-        'departamento' => $_POST['departamento']
+        'estacionamiento' => $_POST['estacionamiento'],
+        'direccion' => $_POST['direccion']
     ];
 
     $db = new Database();
-    $db->insertEntry($data);
+    if ($db->updatePlaza($data)) {
+        echo "Plaza actualizada exitosamente.";
+    } else {
+        echo "Error al actualizar la plaza.";
+    }
+}
+
+// Manejo del formulario de eliminación
+if (isset($_GET['delete'])) {
+    $id = $_GET['delete'];
+    $db = new Database();
+    if ($db->deletePlaza($id)) {
+        echo "Plaza eliminada exitosamente.";
+    } else {
+        echo "Error al eliminar la plaza.";
+    }
 }
 ?>
 
@@ -65,16 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Usuario</title>
-    <script>
-        function confirmSubmission(event) {
-            var confirmAction = confirm("¿Está seguro de que desea enviar estos datos?");
-            if (!confirmAction) {
-                event.preventDefault();
-            }
-        }
-    </script>
-    <link rel="stylesheet" href="style.css"> <!-- Vincula tu archivo CSS -->
+    <title>Gestión de Plazas</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -156,21 +146,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     </style>
 </head>
-<body>
-    <h2>Registrar Nuevo Usuario</h2>
-    <br>
-    <hr>
-    <br>
-    <form id="userForm" method="POST" action="" onsubmit="confirmSubmission(event)">
-        Nombre: <input type="text" name="nombre" required><br><br>
-        Email: <input type="email" name="email" required><br><br>
-        Teléfono: <input type="text" name="telefono" required><br><br>
-        Dirección: <input type="text" name="direccion" required><br><br>
-        Rol: <input type="text" name="rol" required><br><br>
-        Estado: <input type="text" name="estado" required><br><br>
-        Fecha de Nacimiento: <input type="date" name="fecha_nacimiento" required><br><br>
-        Departamento: <input type="text" name="departamento" required><br><br>
-        <button type="submit">Registrar Usuario</button>
-    </form>
+<body >
+    <div >
+        <table>
+            <thead>
+                <tr>
+                    <th>Estacionamiento</th>
+                    <th>Dirección</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $db = new Database();
+                $plazas = $db->getPlazas();
+                foreach ($plazas as $plaza) {
+                    echo "<tr>
+                        <form method='POST' action=''>
+                            <td><input type='text' name='estacionamiento' value='{$plaza['estacionamiento']}'></td>
+                            <td><input type='text' name='direccion' value='{$plaza['direccion']}'></td>
+                            <td>
+                                <button type='submit' name='update'>Actualizar</button>      
+                            </td>
+                        </form>
+                    </tr>";
+                }
+                ?>
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

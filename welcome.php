@@ -50,12 +50,6 @@ if (isset($_GET['page'])) {
             <h4>Usuario</h4>
             <div>
                 °<a href="?page=ver">Inicio</a><br>
-                °<a href="?page=alta">Alta</a><br>
-            </div>
-            <br>
-            <h4>Estacionamientos</h4>
-            <div>
-                °<a href="?page=estacionamientos">Estacionamientos</a><br>
             </div>
         </div>
 
