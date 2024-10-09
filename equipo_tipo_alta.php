@@ -1,6 +1,6 @@
 <?php
 class Database {
-    private $db = "insidencias"; // Cambié de 'Boletaje' a 'insidencias'
+    private $db = "insidencias"; // Nombre correcto de la base de datos
     private $ip = "192.168.1.17";
     private $port = "3306";
     private $username = "celular";
@@ -16,13 +16,13 @@ class Database {
         }
     }
 
-    public function insertPlaza($data) {
-        $sql = "INSERT INTO estacionamiento (nombre, direccion) VALUES (:nombre, :direccion)";
+    public function insertTipoEquipo($data) {
+        $sql = "INSERT INTO tipo_equipo (nombre, descripcion) VALUES (:nombre, :descripcion)";
         $stmt = $this->conn->prepare($sql);
 
         // Enlazar los parámetros con los valores del array $data
         $stmt->bindParam(':nombre', $data['nombre']);
-        $stmt->bindParam(':direccion', $data['direccion']);
+        $stmt->bindParam(':descripcion', $data['descripcion']);
 
         return $stmt->execute(); // Retornar true si la ejecución fue exitosa
     }
@@ -34,15 +34,15 @@ $mensaje = '';
 // Manejo del formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'nombre' => $_POST['estacionamiento'], // Cambié la clave a 'nombre'
-        'direccion' => $_POST['direccion']
+        'nombre' => $_POST['nombre'], // Nombre del equipo
+        'descripcion' => $_POST['descripcion'] // Descripción del equipo
     ];
 
     $db = new Database();
-    if ($db->insertPlaza($data)) {
-        $mensaje = "Estacionamiento registrado exitosamente.";
+    if ($db->insertTipoEquipo($data)) {
+        $mensaje = "Tipo de equipo registrado exitosamente.";
     } else {
-        $mensaje = "Error al registrar el estacionamiento.";
+        $mensaje = "Error al registrar el tipo de equipo.";
     }
 }
 ?>
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alta de Plaza</title>
+    <title>Alta de Tipo de Equipo</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         form input[type="text"],
-        form input[type="number"] {
+        form textarea {
             width: calc(100% - 22px);
             padding: 10px;
             margin-bottom: 15px;
@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </style>
 </head>
 <body>
-    <h2>Alta de Plaza</h2>
+    <h2>Alta de Tipo de Equipo</h2>
     <hr>
     
     <?php if ($mensaje): ?>
@@ -121,14 +121,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <?php endif; ?>
 
     <form method="POST" action="">
+        <label for="nombre">Nombre del Tipo de Equipo</label>
+        <input type="text" name="nombre" id="nombre" required><br>
 
-        <label for="estacionamiento">Nombre del Estacionamiento</label>
-        <input type="text" name="estacionamiento" id="estacionamiento" required><br>
+        <label for="descripcion">Descripción</label>
+        <textarea name="descripcion" id="descripcion" rows="4" required></textarea><br>
 
-        <label for="direccion">Dirección</label>
-        <input type="text" name="direccion" id="direccion" required><br>
-
-        <button type="submit">Registrar Plaza</button>
+        <button type="submit">Registrar Tipo de Equipo</button>
     </form>
 </body>
 </html>

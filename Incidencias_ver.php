@@ -1,6 +1,5 @@
 <?php
 
-
 class Database {
     private $db = "insidencias"; // Nombre de la base de datos
     private $ip = "192.168.1.17"; // Cambia esto según tu configuración
@@ -67,6 +66,7 @@ $mensaje = '';
 
 // Manejo del formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    var_dump($_SESSION); // Para verificar el contenido de la sesión
 
     if (isset($_SESSION['usuario'])) {
         $data = [
@@ -197,54 +197,9 @@ $estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
         <div class="mensaje"><?php echo htmlspecialchars($mensaje); ?></div>
     <?php endif; ?>
 
-    <form method="POST" action="" enctype="multipart/form-data">
-        <label for="tipo">Tipo</label>
-        <select name="tipo" id="tipo" required>
-            <option value="">Selecciona un tipo</option>
-            <option value="hardware">Hardware</option>
-            <option value="software">Software</option>
-        </select>
-
-        <label for="lugar">Lugar</label>
-        <select name="lugar" id="lugar" required>
-            <option value="">Selecciona un lugar</option>
-            <?php foreach ($estacionamientos as $estacionamiento): ?>
-                <option value="<?php echo htmlspecialchars($estacionamiento['id']); ?>">
-                    <?php echo htmlspecialchars($estacionamiento['nombre']); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <label for="equipo">Equipo</label>
-        <select name="equipo" id="equipo" required>
-            <option value="">Selecciona un tipo</option>
-            <?php foreach ($tipos as $tipo): ?>
-                <option value="<?php echo htmlspecialchars($tipo['id']); ?>">
-                    <?php echo htmlspecialchars($tipo['nombre']); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <label for="ubicacion">Ubicación</label>
-        <input type="text" name="ubicacion" id="ubicacion">
-
-        <label for="descripcion">Descripción</label>
-        <textarea name="descripcion" id="descripcion" rows="4" required></textarea>
-
-        <label for="operando">¿Está operando?</label>
-        <input type="checkbox" name="operando" id="operando" value="1">
-
-        <label for="imagen">Imagen</label>
-        <input type="file" name="imagen" id="imagen">
-
-        <label for="reincidencia">¿Es una reincidencia?</label>
-        <input type="checkbox" name="reincidencia" id="reincidencia" value="1">
-
-        <label for="incidencia_relacionada">Incidencia Relacionada</label>
-        <input type="text" name="incidencia_relacionada" id="incidencia_relacionada">
-
-        <button type="submit">Registrar Incidencia</button>
-    </form>
+    <ul align="center">
+                <li><a href="Incidencias_alta.php">Inicio</a></li>
+            </ul>
 
     <h3>Incidencias Registradas</h3>
     <table>

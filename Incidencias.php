@@ -27,7 +27,7 @@ if (isset($_GET['page'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css"> <!-- Vincula tu archivo CSS -->
-    <title>Insidencias</title>
+    <title>Document</title>
 </head>
 <body>
 <?php include 'header.php'; ?>
@@ -35,15 +35,23 @@ if (isset($_GET['page'])) {
     <!-- Contenedor dividido 30% y 70% -->
     <div class="split-container">
         <!-- Sección izquierda (30%) -->
+        <!-- Sección izquierda (30%) -->
         <div class="left-section-split">
-            <h2><?php echo htmlspecialchars($_SESSION['username']); ?></h2>
+            <div align="center">
+                <h2><?php echo htmlspecialchars($_SESSION['username']); ?></h2>
+            </div>
             <hr>
-            <h4>Insidencias</h4>
-            <br>
+            <h4>Usuario</h4>
             <div>
-            °<a href="?page=alta">Alta</a><br>
+                °<a href="?page=alta">Inicio</a><br>
+            </div>
+            <br>
+            <h4>Estacionamientos</h4>
+            <div>
+                °<a href="?page=alta">Alta</a><br>
+            </div>
         </div>
-        </div>
+
         <!-- Sección derecha (70%) -->
         <div class="right-section-split">
             <?php include $fileToInclude; ?>

@@ -45,7 +45,6 @@
         <nav align="center">
             <ul align="center">
                 <li><a href="welcome.php">Inicio</a></li>
-                <li><a href="Boletaje.php">Boletos</a></li>
                 <li><a href="incidencias.php">Incidencias</a></li>
             </ul>
         </nav>
