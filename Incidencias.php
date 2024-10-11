@@ -10,14 +10,14 @@ if (!isset($_SESSION['username'])) {
 if (isset($_GET['page'])) {
     switch ($_GET['page']) {
         case 'alta':
-            $fileToInclude = 'Incidencias_alta.php';
+            $fileToInclude = 'incidencias_alta.php';
             break;
         default:
-            $fileToInclude = 'Incidencias_alta.php';
+            $fileToInclude = 'incidencias_alta.php';
             break;
     }
 } else {
-    $fileToInclude = 'Incidencias_alta.php';
+    $fileToInclude = 'incidencias_alta.php';
 }
 ?>
 

@@ -19,8 +19,8 @@ class Database {
     }
 
     public function insertIncidencia($data) {
-        $sql = "INSERT INTO incidencias (fecha_reporte, quien_reporta, tipo, lugar, equipo, ubicacion, descripcion, operando, imagen, reincidencia, incidencia_relacionada) 
-                VALUES (CURDATE(), :quien_reporta, :tipo, :lugar, :equipo, :ubicacion, :descripcion, :operando, :imagen, :reincidencia, :incidencia_relacionada)";
+        $sql = "INSERT INTO incidencias (fecha_reporte, quien_reporta, tipo, lugar, equipo, ubicacion, descripcion, operando, imagen, reincidencia, incidencia_relacionada, estado) 
+                VALUES (CURDATE(), :quien_reporta, :tipo, :lugar, :equipo, :ubicacion, :descripcion, :operando, :imagen, :reincidencia, :incidencia_relacionada, :estado)";
         $stmt = $this->conn->prepare($sql);
 
         // Enlazar los parámetros
@@ -34,6 +34,7 @@ class Database {
         $stmt->bindParam(':imagen', $data['imagen']);
         $stmt->bindParam(':reincidencia', $data['reincidencia']);
         $stmt->bindParam(':incidencia_relacionada', $data['incidencia_relacionada']);
+        $stmt->bindParam(':estado', $data['estado']); // Agregado para el nuevo campo
 
         return $stmt->execute();
     }
@@ -45,7 +46,6 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Obtener tipos de equipo
     public function getTipos() {
         $sql = "SELECT id, nombre FROM tipo_equipo";
         $stmt = $this->conn->prepare($sql);
@@ -53,7 +53,6 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Obtener estacionamientos
     public function getEstacionamientos() {
         $sql = "SELECT id, nombre FROM estacionamiento";
         $stmt = $this->conn->prepare($sql);
@@ -67,7 +66,6 @@ $mensaje = '';
 
 // Manejo del formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
     if (isset($_SESSION['usuario'])) {
         $data = [
             'quien_reporta' => $_SESSION['usuario'],
@@ -80,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'imagen' => $_FILES['imagen']['name'],
             'reincidencia' => isset($_POST['reincidencia']) ? 1 : 0,
             'incidencia_relacionada' => $_POST['incidencia_relacionada'],
+            'estado' => 'pendiente', // Estado por defecto, cámbialo según sea necesario
         ];
 
         if ($_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
@@ -192,6 +191,8 @@ $estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
 <body>
     <h2>Alta de Incidencias</h2>
     <hr>
+
+    <h2><?php echo htmlspecialchars($_SESSION['username']); ?></h2>
     
     <?php if ($mensaje): ?>
         <div class="mensaje"><?php echo htmlspecialchars($mensaje); ?></div>
@@ -217,7 +218,7 @@ $estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
 
         <label for="equipo">Equipo</label>
         <select name="equipo" id="equipo" required>
-            <option value="">Selecciona un tipo</option>
+            <option value="">Selecciona un equipo</option>
             <?php foreach ($tipos as $tipo): ?>
                 <option value="<?php echo htmlspecialchars($tipo['id']); ?>">
                     <?php echo htmlspecialchars($tipo['nombre']); ?>
@@ -226,7 +227,7 @@ $estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
         </select>
 
         <label for="ubicacion">Ubicación</label>
-        <input type="text" name="ubicacion" id="ubicacion">
+        <input type="text" name="ubicacion" id="ubicacion" required>
 
         <label for="descripcion">Descripción</label>
         <textarea name="descripcion" id="descripcion" rows="4" required></textarea>
@@ -235,28 +236,30 @@ $estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
         <input type="checkbox" name="operando" id="operando" value="1">
 
         <label for="imagen">Imagen</label>
-        <input type="file" name="imagen" id="imagen">
+        <input type="file" name="imagen" id="imagen" accept="image/*">
 
-        <label for="reincidencia">¿Es una reincidencia?</label>
+        <label for="reincidencia">¿Es reincidencia?</label>
         <input type="checkbox" name="reincidencia" id="reincidencia" value="1">
 
-        <label for="incidencia_relacionada">Incidencia Relacionada</label>
+        <label for="incidencia_relacionada">Incidencia relacionada</label>
         <input type="text" name="incidencia_relacionada" id="incidencia_relacionada">
 
         <button type="submit">Registrar Incidencia</button>
     </form>
 
-    <h3>Incidencias Registradas</h3>
+    <h2>Incidencias Registradas</h2>
     <table>
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Fecha Reporte</th>
+                <th>Fecha</th>
                 <th>Quien Reporta</th>
                 <th>Tipo</th>
                 <th>Lugar</th>
                 <th>Equipo</th>
+                <th>Ubicación</th>
                 <th>Descripción</th>
+                <th>Estado</th>
             </tr>
         </thead>
         <tbody>
@@ -268,7 +271,9 @@ $estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
                     <td><?php echo htmlspecialchars($incidencia['tipo']); ?></td>
                     <td><?php echo htmlspecialchars($incidencia['lugar']); ?></td>
                     <td><?php echo htmlspecialchars($incidencia['equipo']); ?></td>
+                    <td><?php echo htmlspecialchars($incidencia['ubicacion']); ?></td>
                     <td><?php echo htmlspecialchars($incidencia['descripcion']); ?></td>
+                    <td><?php echo htmlspecialchars($incidencia['estado']); ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
