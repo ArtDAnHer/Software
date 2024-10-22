@@ -77,19 +77,19 @@ class Database {
     }
 
     public function getTec() {
-        $sql = "SELECT * FROM tec";
+        $sql = "SELECT * FROM tec ";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getTecnico() {
-        $sql = "SELECT * FROM tecnico";
+        $sql = "SELECT * FROM tecnico ";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getEquipos() {
-        $sql = "SELECT * FROM equipos";
+        $sql = "SELECT * FROM equipos ";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -214,23 +214,8 @@ $equipo = $db->getEquipos();
             background-color: #218838;
         }
 
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        table th, table td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-
-        table th {
-            background-color: #f8f9fa;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
@@ -264,17 +249,6 @@ $equipo = $db->getEquipos();
             <?php endforeach; ?>
         </select>
 
-        <label for="equipo">Equipo</label>
-        <select name="equipo" id="equipo">
-            <option value="">Seleccione</option>
-            <?php foreach ($equipo as $equipo): ?>
-                <option value="<?= $equipo['id'] ?>"><?= $equipo['equipo'] ?></option>
-            <?php endforeach; ?>
-        </select>
-
-        <label for="ubicacion">Ubicación</label>
-        <input type="text" name="ubicacion" id="ubicacion">
-
         <label for="estado">Estado</label>
         <select name="estado" id="estado">
             <option value="">Seleccione</option>
@@ -282,6 +256,30 @@ $equipo = $db->getEquipos();
                 <option value="<?= $estado['estado'] ?>"><?= $estado['estado'] ?></option>
             <?php endforeach; ?>
         </select>
+
+        <label for="descripcion">Descripcion</label>
+        <input type="text" name="descripcion" id="descripcion">
+
+        <!-- Dentro del formulario -->
+        <label for="operando">Operando</label>
+        <select name="operando" id="operando" required>
+            <option value="1">Sí</option>
+            <option value="0">No</option>
+        </select>
+
+        <label for="imagen">Imagen</label>
+        <input type="file" name="imagen" id="imagen" accept="image/*">
+
+        <label for="reincidencia">Reincidencia</label>
+        <select name="reincidencia" id="reincidencia" required onchange="toggleIncidenciaRelacionada()">
+            <option value="0">No</option>
+            <option value="1">Sí</option>
+        </select>
+
+        <div id="incidencia-relacionada-container" class="hidden">
+            <label for="incidencia_relacionada">Incidencia relacionada</label>
+            <input type="text" name="incidencia_relacionada" id="incidencia_relacionada">
+        </div>
 
         <label for="area">Área</label>
         <select name="area" id="area">
@@ -291,15 +289,24 @@ $equipo = $db->getEquipos();
             <?php endforeach; ?>
         </select>
 
-        <label for="tecnico">Técnico</label>
-        <select name="tecnico" id="tecnico">
-            <option value="">Seleccione</option>
-            <?php foreach ($tec as $tec): ?>
-                <option value="<?= $tec['tecnico'] ?>"><?= $tec['tecnico'] ?></option>
-            <?php endforeach; ?>
-        </select>
-
         <button type="submit">Registrar Incidencia</button>
     </form>
+
+    <script>
+        function toggleIncidenciaRelacionada() {
+            var reincidencia = document.getElementById("reincidencia").value;
+            var incidenciaRelacionadaContainer = document.getElementById("incidencia-relacionada-container");
+            
+            if (reincidencia == "1") {
+                incidenciaRelacionadaContainer.classList.remove("hidden");
+            } else {
+                incidenciaRelacionadaContainer.classList.add("hidden");
+            }
+        }
+
+        // Llama la función al cargar la página para asegurarse que se muestre correctamente
+        toggleIncidenciaRelacionada();
+    </script>
+
 </body>
 </html>
