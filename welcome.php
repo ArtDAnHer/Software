@@ -21,6 +21,21 @@ if (isset($_GET['page'])) {
         case 'alta_equipo':
             $fileToInclude = 'equipo_alta.php';
             break;
+        case 'alta_area':
+            $fileToInclude = 'area_alta.php';
+            break;
+        case 'alta_tecnico':
+            $fileToInclude = 'tecnico_alta.php';
+            break;
+        case 'alta_falla':
+            $fileToInclude = 'falla_tipo.php';
+            break;
+        case 'alta_estado':
+            $fileToInclude = 'estado_alta.php';
+            break;
+        case 'relacion_tec':
+            $fileToInclude = 'relacion_tec.php';
+            break;
         default:
             $fileToInclude = 'usuario_info.php';
             break;
@@ -60,6 +75,11 @@ if (isset($_GET['page'])) {
                 °<a href="?page=estacionamientos">Estacionamientos</a><br>
                 °<a href="?page=alta_tipo">Tipo de equipo</a><br>
                 °<a href="?page=alta_equipo">Equipo</a><br>
+                °<a href="?page=alta_area">Area</a><br>
+                °<a href="?page=alta_tecnico">Tecnico</a><br>
+                °<a href="?page=alta_falla">Falla</a><br>
+                °<a href="?page=alta_estado">Estado</a><br>
+                °<a href="?page=relacion_tec">Plaza por tecnico</a><br>
             </div>
         </div>
 

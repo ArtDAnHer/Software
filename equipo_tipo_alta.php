@@ -1,6 +1,6 @@
 <?php
 class Database {
-    private $db = "insidencias"; // Nombre correcto de la base de datos
+    private $db = "insidencias"; 
     private $ip = "192.168.1.17";
     private $port = "3306";
     private $username = "celular";
@@ -16,35 +16,47 @@ class Database {
         }
     }
 
+    // Método para insertar un nuevo equipo
     public function insertTipoEquipo($data) {
         $sql = "INSERT INTO tipo_equipo (nombre, descripcion) VALUES (:nombre, :descripcion)";
         $stmt = $this->conn->prepare($sql);
 
-        // Enlazar los parámetros con los valores del array $data
         $stmt->bindParam(':nombre', $data['nombre']);
         $stmt->bindParam(':descripcion', $data['descripcion']);
 
-        return $stmt->execute(); // Retornar true si la ejecución fue exitosa
+        return $stmt->execute();
+    }
+
+    // Método para obtener los equipos registrados
+    public function getTipoEquipos() {
+        $sql = "SELECT * FROM tipo_equipo";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 
-// Inicializa la variable para el mensaje de éxito
+// Inicializa la variable para el mensaje de éxito o error
 $mensaje = '';
 
-// Manejo del formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Recolectar los datos enviados por el formulario
     $data = [
-        'nombre' => $_POST['nombre'], // Nombre del equipo
-        'descripcion' => $_POST['descripcion'] // Descripción del equipo
+        'nombre' => $_POST['nombre'],
+        'descripcion' => $_POST['descripcion']
     ];
 
     $db = new Database();
+    // Insertar el nuevo equipo y mostrar mensaje de éxito o error
     if ($db->insertTipoEquipo($data)) {
-        $mensaje = "Tipo de equipo registrado exitosamente.";
+        $mensaje = "Equipo registrado exitosamente.";
     } else {
-        $mensaje = "Error al registrar el tipo de equipo.";
+        $mensaje = "Error al registrar el equipo.";
     }
 }
+
+// Obtener todos los equipos ya registrados para mostrarlos en la tabla
+$db = new Database();
+$tipo_equipos = $db->getTipoEquipos();
 ?>
 
 <!DOCTYPE html>
@@ -68,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         .mensaje {
             text-align: center;
-            color: green; /* Color verde para el mensaje de éxito */
+            color: green;
             margin: 10px 0;
         }
 
@@ -96,6 +108,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-radius: 4px;
         }
 
+        form textarea {
+            height: 100px;
+        }
+
         form button {
             background-color: #28a745;
             color: white;
@@ -110,6 +126,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         form button:hover {
             background-color: #218838;
         }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #28a745;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -121,13 +157,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <?php endif; ?>
 
     <form method="POST" action="">
-        <label for="nombre">Nombre del Tipo de Equipo</label>
+        <label for="nombre">Nombre del Equipo</label>
         <input type="text" name="nombre" id="nombre" required><br>
 
         <label for="descripcion">Descripción</label>
-        <textarea name="descripcion" id="descripcion" rows="4" required></textarea><br>
+        <textarea name="descripcion" id="descripcion" required></textarea><br>
 
-        <button type="submit">Registrar Tipo de Equipo</button>
+        <button type="submit">Registrar Equipo</button>
     </form>
+
+    <!-- Sección para mostrar la tabla de equipos registrados -->
+    <h2>Equipos Registrados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($tipo_equipos): ?>
+                <?php foreach ($tipo_equipos as $equipo): ?>
+                    <tr>
+                        <td><?php echo $equipo['id']; ?></td>
+                        <td><?php echo $equipo['nombre']; ?></td>
+                        <td><?php echo $equipo['descripcion']; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="3">No hay equipos registrados.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </body>
 </html>

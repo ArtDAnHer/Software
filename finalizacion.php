@@ -17,7 +17,7 @@ class Database {
     }
 
     public function getIncidencias() {
-        $sql = "SELECT * FROM incidencias"; // Consulta para obtener todos los datos de la tabla incidencias
+        $sql = "SELECT * FROM incidencias where atendido = 0 "; // Consulta para obtener todos los datos de la tabla incidencias
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -117,6 +117,7 @@ $incidencias = $db->getIncidencias();
                 <th>Atendido</th>
                 <th>Firma</th>
                 <th>File</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -146,6 +147,7 @@ $incidencias = $db->getIncidencias();
                 <td><?php echo $incidencia['atendido'] ? 'Sí' : 'No'; ?></td>
                 <td><?php echo $incidencia['firma']; ?></td>
                 <td><button onclick="window.location.href='visualizar.php?id=<?php echo $incidencia['id']; ?>'">Visualizar</button></td>
+                <td><button onclick="abrirPopup(<?php echo $incidencia['id']; ?>)">Editar</button></td>
             </tr>
         <?php endforeach; ?>
         </tbody>

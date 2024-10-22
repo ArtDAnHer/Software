@@ -16,18 +16,18 @@ class Database {
         }
     }
 
-    public function insertPlaza($data) {
-        $sql = "INSERT INTO estacionamiento (nombre, direccion) VALUES (:nombre, :direccion)";
+    public function insertEstado($data) {
+        $sql = "INSERT INTO estado (estado, descripcion) VALUES (:estado, :descripcion)";
         $stmt = $this->conn->prepare($sql);
 
-        $stmt->bindParam(':nombre', $data['nombre']);
-        $stmt->bindParam(':direccion', $data['direccion']);
+        $stmt->bindParam(':estado', $data['estado']);
+        $stmt->bindParam(':descripcion', $data['descripcion']);
 
         return $stmt->execute();
     }
 
-    public function getPlazas() {
-        $sql = "SELECT * FROM estacionamiento";
+    public function getEstados() {
+        $sql = "SELECT id, estado, descripcion FROM estado";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -37,20 +37,20 @@ $mensaje = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'nombre' => $_POST['estacionamiento'],
-        'direccion' => $_POST['direccion']
+        'estado' => $_POST['estado'],
+        'descripcion' => $_POST['descripcion'],
     ];
 
     $db = new Database();
-    if ($db->insertPlaza($data)) {
-        $mensaje = "Estacionamiento registrado exitosamente.";
+    if ($db->insertEstado($data)) {
+        $mensaje = "Estado registrado exitosamente.";
     } else {
-        $mensaje = "Error al registrar el estacionamiento.";
+        $mensaje = "Error al registrar el estado.";
     }
 }
 
 $db = new Database();
-$plazas = $db->getPlazas(); // Obtener las plazas registradas
+$estados = $db->getEstados(); // Obtener los estados registrados
 ?>
 
 <!DOCTYPE html>
@@ -58,7 +58,7 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alta de Plaza</title>
+    <title>Gestión de Estados</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -138,7 +138,7 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
     </style>
 </head>
 <body>
-    <h2>Alta de Plaza</h2>
+    <h2>Gestión de Estados</h2>
     <hr>
     
     <?php if ($mensaje): ?>
@@ -146,35 +146,37 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
     <?php endif; ?>
 
     <form method="POST" action="">
-        <label for="estacionamiento">Nombre del Estacionamiento</label>
-        <input type="text" name="estacionamiento" id="estacionamiento" required><br>
+        <label for="estado">Estado</label>
+        <input type="text" name="estado" id="estado" required>
 
-        <label for="direccion">Dirección</label>
-        <input type="text" name="direccion" id="direccion" required><br>
+        <label for="descripcion">Descripción</label>
+        <input type="text" name="descripcion" id="descripcion" required>
 
-        <button type="submit">Registrar Plaza</button>
+        <button type="submit">Registrar Estado</button>
     </form>
 
-    <!-- Sección para mostrar la tabla de plazas -->
-    <h2>Plazas Registradas</h2>
+    <!-- Sección para mostrar la tabla de estados -->
+    <h2>Estados Registrados</h2>
     <table>
         <thead>
             <tr>
-                <th>Nombre</th>
-                <th>Dirección</th>
+                <th>ID</th>
+                <th>Estado</th>
+                <th>Descripción</th>
             </tr>
         </thead>
         <tbody>
-            <?php if ($plazas): ?>
-                <?php foreach ($plazas as $plaza): ?>
+            <?php if ($estados): ?>
+                <?php foreach ($estados as $estado): ?>
                     <tr>
-                        <td><?php echo $plaza['nombre']; ?></td>
-                        <td><?php echo $plaza['direccion']; ?></td>
+                        <td><?php echo $estado['id']; ?></td>
+                        <td><?php echo $estado['estado']; ?></td>
+                        <td><?php echo $estado['descripcion']; ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="3">No hay plazas registradas.</td>
+                    <td colspan="3">No hay estados registrados.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

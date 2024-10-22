@@ -12,6 +12,15 @@ if (isset($_GET['page'])) {
         case 'alta':
             $fileToInclude = 'incidencias_alta.php';
             break;
+        case 'asignar_tecnico':
+            $fileToInclude = 'asignar_tecnico.php';
+            break;
+        case 'diagnostico':
+            $fileToInclude = 'lista_diacnosticos.php';
+            break;
+        case 'finalizacion':
+            $fileToInclude = 'finalizacion.php';
+            break;
         default:
             $fileToInclude = 'incidencias_alta.php';
             break;
@@ -19,6 +28,9 @@ if (isset($_GET['page'])) {
 } else {
     $fileToInclude = 'incidencias_alta.php';
 }
+
+// Pasamos la sesión como variable
+$username = $_SESSION['username'];
 ?>
 
 <!DOCTYPE html>
@@ -35,10 +47,9 @@ if (isset($_GET['page'])) {
     <!-- Contenedor dividido 30% y 70% -->
     <div class="split-container">
         <!-- Sección izquierda (30%) -->
-        <!-- Sección izquierda (30%) -->
         <div class="left-section-split">
             <div align="center">
-                <h2><?php echo htmlspecialchars($_SESSION['username']); ?></h2>
+                <h2><?php echo htmlspecialchars($username); ?></h2>
             </div>
             <hr>
             <h4>Usuario</h4>
@@ -49,6 +60,10 @@ if (isset($_GET['page'])) {
             <h4>Estacionamientos</h4>
             <div>
                 °<a href="?page=alta">Alta</a><br>
+                °<a href="?page=asignar_tecnico">Asignar tecnico</a><br>
+                °<a href="?page=diagnostico">Diagnistico</a><br>
+                °<a href="?page=finalizacion">Finalizacion</a><br>
+
             </div>
         </div>
 
@@ -59,4 +74,3 @@ if (isset($_GET['page'])) {
     </div>
 </body>
 </html>
-

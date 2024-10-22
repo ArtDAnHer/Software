@@ -17,7 +17,7 @@ class Database {
     }
 
     public function getIncidencias() {
-        $sql = "SELECT * FROM incidencias"; // Consulta para obtener todos los datos de la tabla incidencias
+        $sql = "SELECT * FROM incidencias where atendido = 0";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -83,8 +83,8 @@ $incidencias = $db->getIncidencias();
     </style>
     <script>
         function abrirPopup(id) {
-            var url = 'cierre.php?id=' + id;
-            var popup = window.open(url, 'cierre', 'width=600,height=600');
+            var url = 'crear_diagnostico.php?id=' + id;
+            var popup = window.open(url, 'Editar Incidencia', 'width=600,height=600');
         }
     </script>
 </head>
@@ -114,9 +114,7 @@ $incidencias = $db->getIncidencias();
                 <th>Refacción Adicional 2</th>
                 <th>Foto Evidencia Atención</th>
                 <th>Fecha Atención</th>
-                <th>Atendido</th>
-                <th>Firma</th>
-                <th>File</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -143,9 +141,7 @@ $incidencias = $db->getIncidencias();
                 <td><?php echo $incidencia['refaccion_adicional_2']; ?></td>
                 <td><?php echo $incidencia['foto_evidencia_atencion']; ?></td>
                 <td><?php echo $incidencia['fecha_atencion']; ?></td>
-                <td><?php echo $incidencia['atendido'] ? 'Sí' : 'No'; ?></td>
-                <td><?php echo $incidencia['firma']; ?></td>
-                <td><button onclick="window.location.href='visualizar.php?id=<?php echo $incidencia['id']; ?>'">Visualizar</button></td>
+                <td><button onclick="abrirPopup(<?php echo $incidencia['id']; ?>)">Editar</button></td>
             </tr>
         <?php endforeach; ?>
         </tbody>

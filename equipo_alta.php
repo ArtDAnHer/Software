@@ -1,6 +1,6 @@
 <?php
 class Database {
-    private $db = "insidencias"; // Nombre correcto de la base de datos
+    private $db = "insidencias";
     private $ip = "192.168.1.17";
     private $port = "3306";
     private $username = "celular";
@@ -16,57 +16,71 @@ class Database {
         }
     }
 
-    // Método para insertar equipo
     public function insertEquipo($data) {
-        $sql = "INSERT INTO equipos (estacionamiento, tipo_de_equipo, nombre_equipo, ubicacion) VALUES (:estacionamiento, :tipo_de_equipo, :nombre_equipo, :ubicacion)";
+        $sql = "INSERT INTO equipos (tipo, lugar, estado, equipo) VALUES (:tipo, :lugar, :estado, :equipo)";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':estacionamiento', $data['estacionamiento']);
-        $stmt->bindParam(':tipo_de_equipo', $data['tipo_de_equipo']);
-        $stmt->bindParam(':nombre_equipo', $data['nombre_equipo']);
-        $stmt->bindParam(':ubicacion', $data['ubicacion']);
-        return $stmt->execute(); // Retornar true si la ejecución fue exitosa
+
+        $stmt->bindParam(':tipo', $data['tipo']);
+        $stmt->bindParam(':lugar', $data['lugar']);
+        $stmt->bindParam(':estado', $data['estado']);
+        $stmt->bindParam(':equipo', $data['equipo']);
+
+        return $stmt->execute();
     }
 
-    // Método para obtener la lista de estacionamientos
-    public function getEstacionamientos() {
-        $sql = "SELECT id, nombre FROM estacionamiento";
+    public function getEquipos() {
+        // Modificación para traer los nombres de las tablas relacionadas en lugar de los IDs
+        $sql = "SELECT e.id, te.nombre AS tipo, est.nombre AS lugar, es.estado, e.equipo, e.insidencias
+                FROM equipos e
+                JOIN tipo_equipo te ON e.tipo = te.id
+                JOIN estacionamiento est ON e.lugar = est.id
+                JOIN estado es ON e.estado = es.id";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Método para obtener la lista de tipos de equipo
-    public function getTiposDeEquipo() {
+    public function getTipos() {
         $sql = "SELECT id, nombre FROM tipo_equipo";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getEstados() {
+        $sql = "SELECT id, estado FROM estado";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getLugares() {
+        $sql = "SELECT id, nombre FROM estacionamiento";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 
-// Inicializa la variable para el mensaje de éxito, la lista de estacionamientos y tipos de equipo
 $mensaje = '';
-$estacionamientos = [];
-$tiposDeEquipo = [];
 
-// Crear una instancia de la base de datos y obtener las listas
-$db = new Database();
-$estacionamientos = $db->getEstacionamientos();
-$tiposDeEquipo = $db->getTiposDeEquipo();
-
-// Manejo del formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'estacionamiento' => $_POST['estacionamiento'], // ID del estacionamiento seleccionado
-        'tipo_de_equipo' => $_POST['tipo_de_equipo'], // ID del tipo de equipo seleccionado
-        'nombre_equipo' => $_POST['nombre_equipo'], // Nombre del equipo
-        'ubicacion' => $_POST['ubicacion'] // Ubicación del equipo
+        'tipo' => $_POST['tipo'],
+        'lugar' => $_POST['lugar'],
+        'estado' => $_POST['estado'],
+        'equipo' => $_POST['equipo'],
     ];
 
+    $db = new Database();
     if ($db->insertEquipo($data)) {
         $mensaje = "Equipo registrado exitosamente.";
     } else {
         $mensaje = "Error al registrar el equipo.";
     }
 }
+
+$db = new Database();
+$equipos = $db->getEquipos(); // Obtener los equipos registrados
+$tipos = $db->getTipos(); // Obtener los tipos de equipo
+$estados = $db->getEstados(); // Obtener los estados
+$lugares = $db->getLugares(); // Obtener los lugares
 ?>
 
 <!DOCTYPE html>
@@ -74,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alta de Equipo</title>
+    <title>Alta de Equipos</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -90,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         .mensaje {
             text-align: center;
-            color: green; /* Color verde para el mensaje de éxito */
+            color: green;
             margin: 10px 0;
         }
 
@@ -109,15 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             display: block;
         }
 
-        form input[type="text"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        form select {
+        form input[type="text"], form select {
             width: calc(100% - 22px);
             padding: 10px;
             margin-bottom: 15px;
@@ -139,10 +145,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         form button:hover {
             background-color: #218838;
         }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #28a745;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <h2>Alta de Equipo</h2>
+    <h2>Alta de Equipos</h2>
     <hr>
     
     <?php if ($mensaje): ?>
@@ -150,33 +176,66 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <?php endif; ?>
 
     <form method="POST" action="">
-        <label for="estacionamiento">Estacionamiento</label>
-        <select name="estacionamiento" id="estacionamiento" required>
-            <option value="">Seleccione un estacionamiento</option>
-            <?php foreach ($estacionamientos as $estacionamiento): ?>
-                <option value="<?php echo $estacionamiento['id']; ?>">
-                    <?php echo $estacionamiento['nombre']; ?>
-                </option>
+        <label for="tipo">Tipo de Equipo</label>
+        <select name="tipo" id="tipo" required>
+            <option value="">Seleccione un tipo</option>
+            <?php foreach ($tipos as $tipo): ?>
+                <option value="<?php echo $tipo['id']; ?>"><?php echo $tipo['nombre']; ?></option>
             <?php endforeach; ?>
-        </select><br>
+        </select>
 
-        <label for="tipo_de_equipo">Tipo de Equipo</label>
-        <select name="tipo_de_equipo" id="tipo_de_equipo" required>
-            <option value="">Seleccione un tipo de equipo</option>
-            <?php foreach ($tiposDeEquipo as $tipo): ?>
-                <option value="<?php echo $tipo['id']; ?>">
-                    <?php echo $tipo['nombre']; ?>
-                </option>
+        <label for="lugar">Lugar</label>
+        <select name="lugar" id="lugar" required>
+            <option value="">Seleccione un lugar</option>
+            <?php foreach ($lugares as $lugar): ?>
+                <option value="<?php echo $lugar['id']; ?>"><?php echo $lugar['nombre']; ?></option>
             <?php endforeach; ?>
-        </select><br>
+        </select>
 
-        <label for="nombre_equipo">Nombre del Equipo</label>
-        <input type="text" name="nombre_equipo" id="nombre_equipo" required><br>
+        <label for="estado">Estado</label>
+        <select name="estado" id="estado" required>
+            <option value="">Seleccione un estado</option>
+            <?php foreach ($estados as $estado): ?>
+                <option value="<?php echo $estado['id']; ?>"><?php echo $estado['estado']; ?></option>
+            <?php endforeach; ?>
+        </select>
 
-        <label for="ubicacion">Ubicación</label>
-        <input type="text" name="ubicacion" id="ubicacion" required><br>
+        <label for="equipo">Nombre del Equipo</label>
+        <input type="text" name="equipo" id="equipo" required>
 
         <button type="submit">Registrar Equipo</button>
     </form>
+
+    <h2>Equipos Registrados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tipo</th>
+                <th>Lugar</th>
+                <th>Estado</th>
+                <th>Equipo</th>
+                <th>Incidencias</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($equipos): ?>
+                <?php foreach ($equipos as $equipo): ?>
+                    <tr>
+                        <td><?php echo $equipo['id']; ?></td>
+                        <td><?php echo $equipo['tipo']; ?></td> <!-- Mostrar el nombre del tipo -->
+                        <td><?php echo $equipo['lugar']; ?></td> <!-- Mostrar el nombre del lugar -->
+                        <td><?php echo $equipo['estado']; ?></td> <!-- Mostrar el estado -->
+                        <td><?php echo $equipo['equipo']; ?></td>
+                        <td><?php echo $equipo['insidencias']; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="6">No hay equipos registrados.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </body>
 </html>

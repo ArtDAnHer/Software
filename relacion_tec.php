@@ -16,18 +16,33 @@ class Database {
         }
     }
 
-    public function insertPlaza($data) {
-        $sql = "INSERT INTO estacionamiento (nombre, direccion) VALUES (:nombre, :direccion)";
+    public function insertTec($data) {
+        $sql = "INSERT INTO Tec (tecnico, plaza) VALUES (:tecnico, :plaza)";
         $stmt = $this->conn->prepare($sql);
 
-        $stmt->bindParam(':nombre', $data['nombre']);
-        $stmt->bindParam(':direccion', $data['direccion']);
+        $stmt->bindParam(':tecnico', $data['tecnico']); // ID del técnico
+        $stmt->bindParam(':plaza', $data['plaza']); // ID de la plaza
 
         return $stmt->execute();
     }
 
-    public function getPlazas() {
-        $sql = "SELECT * FROM estacionamiento";
+    public function getTecnicosRegistrados() {
+        $sql = "SELECT t.id, te.tecnico, e.nombre AS plaza 
+                FROM Tec t
+                JOIN tecnico te ON t.tecnico = te.id
+                JOIN estacionamiento e ON t.plaza = e.id"; // Traer los datos de la tabla Tec con relaciones
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTecnicosList() {
+        $sql = "SELECT id, tecnico FROM tecnico"; // Obtener la lista de técnicos
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getLugares() {
+        $sql = "SELECT id, nombre FROM estacionamiento"; // Obtener los lugares (plazas)
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -37,20 +52,22 @@ $mensaje = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'nombre' => $_POST['estacionamiento'],
-        'direccion' => $_POST['direccion']
+        'tecnico' => $_POST['tecnico'],
+        'plaza' => $_POST['plaza'],
     ];
 
     $db = new Database();
-    if ($db->insertPlaza($data)) {
-        $mensaje = "Estacionamiento registrado exitosamente.";
+    if ($db->insertTec($data)) {
+        $mensaje = "Técnico registrado exitosamente.";
     } else {
-        $mensaje = "Error al registrar el estacionamiento.";
+        $mensaje = "Error al registrar el técnico.";
     }
 }
 
 $db = new Database();
-$plazas = $db->getPlazas(); // Obtener las plazas registradas
+$tecnicosRegistrados = $db->getTecnicosRegistrados(); // Obtener los técnicos ya registrados
+$tecnicosList = $db->getTecnicosList(); // Obtener la lista de técnicos
+$lugares = $db->getLugares(); // Obtener los lugares (plazas)
 ?>
 
 <!DOCTYPE html>
@@ -58,7 +75,7 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alta de Plaza</title>
+    <title>Alta de Técnicos</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -93,7 +110,7 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
             display: block;
         }
 
-        form input[type="text"] {
+        form select {
             width: calc(100% - 22px);
             padding: 10px;
             margin-bottom: 15px;
@@ -138,7 +155,7 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
     </style>
 </head>
 <body>
-    <h2>Alta de Plaza</h2>
+    <h2>Alta de Técnicos</h2>
     <hr>
     
     <?php if ($mensaje): ?>
@@ -146,35 +163,46 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
     <?php endif; ?>
 
     <form method="POST" action="">
-        <label for="estacionamiento">Nombre del Estacionamiento</label>
-        <input type="text" name="estacionamiento" id="estacionamiento" required><br>
+        <label for="tecnico">Técnico</label>
+        <select name="tecnico" id="tecnico" required>
+            <option value="">Seleccione un técnico</option>
+            <?php foreach ($tecnicosList as $tec): ?>
+                <option value="<?php echo $tec['id']; ?>"><?php echo $tec['tecnico']; ?></option>
+            <?php endforeach; ?>
+        </select>
 
-        <label for="direccion">Dirección</label>
-        <input type="text" name="direccion" id="direccion" required><br>
+        <label for="plaza">Plaza</label>
+        <select name="plaza" id="plaza" required>
+            <option value="">Seleccione una plaza</option>
+            <?php foreach ($lugares as $lugar): ?>
+                <option value="<?php echo $lugar['id']; ?>"><?php echo $lugar['nombre']; ?></option>
+            <?php endforeach; ?>
+        </select>
 
-        <button type="submit">Registrar Plaza</button>
+        <button type="submit">Registrar Técnico</button>
     </form>
 
-    <!-- Sección para mostrar la tabla de plazas -->
-    <h2>Plazas Registradas</h2>
+    <h2>Técnicos Registrados</h2>
     <table>
         <thead>
             <tr>
-                <th>Nombre</th>
-                <th>Dirección</th>
+                <th>ID</th>
+                <th>Técnico</th>
+                <th>Plaza</th>
             </tr>
         </thead>
         <tbody>
-            <?php if ($plazas): ?>
-                <?php foreach ($plazas as $plaza): ?>
+            <?php if ($tecnicosRegistrados): ?>
+                <?php foreach ($tecnicosRegistrados as $tec): ?>
                     <tr>
-                        <td><?php echo $plaza['nombre']; ?></td>
-                        <td><?php echo $plaza['direccion']; ?></td>
+                        <td><?php echo $tec['id']; ?></td>
+                        <td><?php echo $tec['tecnico']; ?></td> <!-- Mostrar nombre del técnico -->
+                        <td><?php echo $tec['plaza']; ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="3">No hay plazas registradas.</td>
+                    <td colspan="3">No hay técnicos registrados.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

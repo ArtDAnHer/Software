@@ -1,6 +1,6 @@
 <?php
 class Database {
-    private $db = "insidencias";
+    private $db = "insidencias"; 
     private $ip = "192.168.1.17";
     private $port = "3306";
     private $username = "celular";
@@ -16,18 +16,18 @@ class Database {
         }
     }
 
-    public function insertPlaza($data) {
-        $sql = "INSERT INTO estacionamiento (nombre, direccion) VALUES (:nombre, :direccion)";
+    public function insertArea($data) {
+        $sql = "INSERT INTO area (area, descripcion) VALUES (:area, :descripcion)";
         $stmt = $this->conn->prepare($sql);
 
-        $stmt->bindParam(':nombre', $data['nombre']);
-        $stmt->bindParam(':direccion', $data['direccion']);
+        $stmt->bindParam(':area', $data['area']);
+        $stmt->bindParam(':descripcion', $data['descripcion']);
 
         return $stmt->execute();
     }
 
-    public function getPlazas() {
-        $sql = "SELECT * FROM estacionamiento";
+    public function getAreas() {
+        $sql = "SELECT * FROM area";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -37,20 +37,20 @@ $mensaje = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'nombre' => $_POST['estacionamiento'],
-        'direccion' => $_POST['direccion']
+        'area' => $_POST['area'],
+        'descripcion' => $_POST['descripcion']
     ];
 
     $db = new Database();
-    if ($db->insertPlaza($data)) {
-        $mensaje = "Estacionamiento registrado exitosamente.";
+    if ($db->insertArea($data)) {
+        $mensaje = "Área registrada exitosamente.";
     } else {
-        $mensaje = "Error al registrar el estacionamiento.";
+        $mensaje = "Error al registrar el área.";
     }
 }
 
 $db = new Database();
-$plazas = $db->getPlazas(); // Obtener las plazas registradas
+$areas = $db->getAreas();
 ?>
 
 <!DOCTYPE html>
@@ -58,7 +58,7 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alta de Plaza</title>
+    <title>Registro de Área</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -93,12 +93,17 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
             display: block;
         }
 
-        form input[type="text"] {
+        form input[type="text"],
+        form textarea {
             width: calc(100% - 22px);
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 4px;
+        }
+
+        form textarea {
+            height: 100px;
         }
 
         form button {
@@ -114,6 +119,14 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
 
         form button:hover {
             background-color: #218838;
+        }
+
+        form select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
 
         table {
@@ -138,7 +151,7 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
     </style>
 </head>
 <body>
-    <h2>Alta de Plaza</h2>
+    <h2>Registro de Área</h2>
     <hr>
     
     <?php if ($mensaje): ?>
@@ -146,35 +159,34 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
     <?php endif; ?>
 
     <form method="POST" action="">
-        <label for="estacionamiento">Nombre del Estacionamiento</label>
-        <input type="text" name="estacionamiento" id="estacionamiento" required><br>
+        <label for="area">Área</label>
+        <input type="text" name="area" id="area" required><br>
 
-        <label for="direccion">Dirección</label>
-        <input type="text" name="direccion" id="direccion" required><br>
+        <label for="descripcion">Descripción</label>
+        <textarea name="descripcion" id="descripcion" rows="4" required></textarea><br>
 
-        <button type="submit">Registrar Plaza</button>
+        <button type="submit">Registrar Área</button>
     </form>
 
-    <!-- Sección para mostrar la tabla de plazas -->
-    <h2>Plazas Registradas</h2>
+    <h2>Áreas Registradas</h2>
     <table>
         <thead>
             <tr>
-                <th>Nombre</th>
-                <th>Dirección</th>
+                <th>Área</th>
+                <th>Descripción</th>
             </tr>
         </thead>
         <tbody>
-            <?php if ($plazas): ?>
-                <?php foreach ($plazas as $plaza): ?>
+            <?php if ($areas): ?>
+                <?php foreach ($areas as $area): ?>
                     <tr>
-                        <td><?php echo $plaza['nombre']; ?></td>
-                        <td><?php echo $plaza['direccion']; ?></td>
+                        <td><?php echo $area['area']; ?></td>
+                        <td><?php echo $area['descripcion']; ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="3">No hay plazas registradas.</td>
+                    <td colspan="3">No hay áreas registradas.</td>
                 </tr>
             <?php endif; ?>
         </tbody>
