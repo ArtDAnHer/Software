@@ -76,8 +76,20 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getTecnico() {
+    public function getTec() {
         $sql = "SELECT * FROM tec";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTecnico() {
+        $sql = "SELECT * FROM tecnico";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getEquipos() {
+        $sql = "SELECT * FROM equipos";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -87,6 +99,20 @@ class Database {
 $mensaje = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Manejar la subida de la imagen
+    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] == 0) {
+        $uploadDir = 'uploads/';  // Define la carpeta donde guardarás las imágenes
+        $uploadFile = $uploadDir . basename($_FILES['imagen']['name']);
+
+        if (move_uploaded_file($_FILES['imagen']['tmp_name'], $uploadFile)) {
+            $imagenPath = $uploadFile;  // Ruta de la imagen a guardar en la base de datos
+        } else {
+            $imagenPath = null;  // No se subió la imagen correctamente
+        }
+    } else {
+        $imagenPath = null;  // No se seleccionó ninguna imagen
+    }
+
     $data = [
         'fecha_reporte' => date('Y-m-d'),
         'quien_reporta' => $_SESSION['username'], // Assuming the username is stored in session
@@ -97,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'ubicacion' => isset($_POST['ubicacion']) ? $_POST['ubicacion'] : '',
         'descripcion' => isset($_POST['descripcion']) ? $_POST['descripcion'] : '',
         'operando' => isset($_POST['operando']) ? 1 : 0,
-        'imagen' => null, // Handle image upload if necessary
+        'imagen' => $imagenPath,  // Guardar la ruta de la imagen en la base de datos
         'reincidencia' => isset($_POST['reincidencia']) ? 1 : 0,
         'incidencia_relacionada' => isset($_POST['incidencia_relacionada']) ? $_POST['incidencia_relacionada'] : null,
         'estado' => isset($_POST['estado']) ? $_POST['estado'] : '',
@@ -120,7 +146,9 @@ $tipos_falla = $db->getTiposFalla(); // Fetch tipos_falla for the dropdown
 $estacionamiento = $db->getEstacionamientos();
 $estado = $db->getEstado();
 $area = $db->getArea();
-$tecnico = $db->gettecnico();
+$tec = $db->getTec();
+$tec = $db->getTecnico();
+$equipo = $db->getEquipos();
 ?>
 
 <!DOCTYPE html>
@@ -163,7 +191,7 @@ $tecnico = $db->gettecnico();
             display: block;
         }
 
-        form input[type="text"], form select {
+        form input[type="text"], form select, form input[type="file"] {
             width: calc(100% - 22px);
             padding: 10px;
             margin-bottom: 15px;
@@ -198,99 +226,80 @@ $tecnico = $db->gettecnico();
         table th, table td {
             padding: 10px;
             border: 1px solid #ddd;
-            text-align: center;
+            text-align: left;
         }
 
         table th {
-            background-color: #28a745;
-            color: white;
+            background-color: #f8f9fa;
         }
     </style>
 </head>
 <body>
+
     <h2>Registro de Incidencias</h2>
-    <hr>
-    
-    <?php if ($mensaje): ?>
-        <div class="mensaje"><?php echo $mensaje; ?></div>
-    <?php endif; ?>
+    <div class="mensaje"><?= $mensaje ?></div>
 
-    <form method="POST" action="">
-
-        <label for="tipo">Tipo</label>
+    <form method="POST" action="" enctype="multipart/form-data">
+        <label for="tipo">Tipo de Incidencia</label>
         <select name="tipo" id="tipo" required>
-            <option value="">Seleccione un tipo</option>
+            <option value="">Seleccione</option>
             <?php foreach ($tipos as $tipo): ?>
-                <option value="<?php echo $tipo['id']; ?>"><?php echo $tipo['nombre']; ?></option>
+                <option value="<?= $tipo['nombre'] ?>"><?= $tipo['nombre'] ?></option>
             <?php endforeach; ?>
         </select>
 
         <label for="tipo_falla">Tipo de Falla</label>
-        <select name="tipo_falla" id="tipo_falla" required>
-            <option value="">Seleccione un tipo de falla</option>
-            <?php foreach ($tipos_falla as $falla): ?>
-                <option value="<?php echo $falla['id']; ?>"><?php echo $falla['nombre']; ?></option>
+        <select name="tipo_falla" id="tipo_falla">
+            <option value="">Seleccione</option>
+            <?php foreach ($tipos_falla as $tipo_falla): ?>
+                <option value="<?= $tipo_falla['id'] ?>"><?= $tipo_falla['nombre'] ?></option>
             <?php endforeach; ?>
         </select>
 
         <label for="lugar">Lugar</label>
-        <select name="lugar" id="lugar" required>
-            <option value="">Seleccione un tipo de falla</option>
-            <?php foreach ($estacionamiento as $estacionamiento): ?>
-                <option value="<?php echo $estacionamiento['id']; ?>"><?php echo $estacionamiento['nombre']; ?></option>
+        <select name="lugar" id="lugar">
+            <option value="">Seleccione</option>
+            <?php foreach ($estacionamiento as $est): ?>
+                <option value="<?= $est['id'] ?>"><?= $est['nombre'] ?></option>
             <?php endforeach; ?>
         </select>
 
         <label for="equipo">Equipo</label>
-        <input type="text" name="equipo" id="equipo" required><br>
+        <select name="equipo" id="equipo">
+            <option value="">Seleccione</option>
+            <?php foreach ($equipo as $equipo): ?>
+                <option value="<?= $equipo['id'] ?>"><?= $equipo['equipo'] ?></option>
+            <?php endforeach; ?>
+        </select>
 
         <label for="ubicacion">Ubicación</label>
-        <input type="text" name="ubicacion" id="ubicacion"><br>
-
-        <label for="descripcion">Descripción</label>
-        <input type="text" name="descripcion" id="descripcion"><br>
-
-        <label for="operando">Operando</label>
-        <select name="operando" id="operando">
-            <option value="1">Sí</option>
-            <option value="0">No</option>
-        </select><br>
-
-        <label for="reincidencia">Reincidencia</label>
-        <select name="reincidencia" id="reincidencia">
-            <option value="1">Sí</option>
-            <option value="0">No</option>
-        </select><br>
-
-        <label for="incidencia_relacionada">Incidencia Relacionada</label>
-        <input type="text" name="incidencia_relacionada" id="incidencia_relacionada"><br>
+        <input type="text" name="ubicacion" id="ubicacion">
 
         <label for="estado">Estado</label>
-        <select name="estado" id="estado" required>
-            <option value="">Seleccione un tipo de falla</option>
+        <select name="estado" id="estado">
+            <option value="">Seleccione</option>
             <?php foreach ($estado as $estado): ?>
-                <option value="<?php echo $estado['id']; ?>"><?php echo $estado['estado']; ?></option>
+                <option value="<?= $estado['estado'] ?>"><?= $estado['estado'] ?></option>
             <?php endforeach; ?>
         </select>
 
         <label for="area">Área</label>
-        <select name="area" id="area" required>
-            <option value="">Seleccione un tipo de falla</option>
+        <select name="area" id="area">
+            <option value="">Seleccione</option>
             <?php foreach ($area as $area): ?>
-                <option value="<?php echo $area['id']; ?>"><?php echo $area['area']; ?></option>
+                <option value="<?= $area['area'] ?>"><?= $area['area'] ?></option>
             <?php endforeach; ?>
         </select>
 
         <label for="tecnico">Técnico</label>
-        <select name="tecnico" id="tecnico" required>
-            <option value="">Seleccione un tipo de falla</option>
-            <?php foreach ($tecnico as $tecnico): ?>
-                <option value="<?php echo $tecnico['id']; ?>"><?php echo $tecnico['tecnico']; ?></option>
+        <select name="tecnico" id="tecnico">
+            <option value="">Seleccione</option>
+            <?php foreach ($tec as $tec): ?>
+                <option value="<?= $tec['tecnico'] ?>"><?= $tec['tecnico'] ?></option>
             <?php endforeach; ?>
         </select>
 
         <button type="submit">Registrar Incidencia</button>
     </form>
-
 </body>
 </html>
