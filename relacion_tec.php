@@ -167,7 +167,7 @@ $lugares = $db->getLugares(); // Obtener los lugares (plazas)
         <select name="tecnico" id="tecnico" required>
             <option value="">Seleccione un técnico</option>
             <?php foreach ($tecnicosList as $tec): ?>
-                <option value="<?php echo $tec['id']; ?>"><?php echo $tec['tecnico']; ?></option>
+                <option value="<?php echo $tec['tecnico']; ?>"><?php echo $tec['tecnico']; ?></option>
             <?php endforeach; ?>
         </select>
 
@@ -175,37 +175,11 @@ $lugares = $db->getLugares(); // Obtener los lugares (plazas)
         <select name="plaza" id="plaza" required>
             <option value="">Seleccione una plaza</option>
             <?php foreach ($lugares as $lugar): ?>
-                <option value="<?php echo $lugar['id']; ?>"><?php echo $lugar['nombre']; ?></option>
+                <option value="<?php echo $lugar['nombre']; ?>"><?php echo $lugar['nombre']; ?></option>
             <?php endforeach; ?>
         </select>
 
         <button type="submit">Registrar Técnico</button>
     </form>
-
-    <h2>Técnicos Registrados</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Técnico</th>
-                <th>Plaza</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if ($tecnicosRegistrados): ?>
-                <?php foreach ($tecnicosRegistrados as $tec): ?>
-                    <tr>
-                        <td><?php echo $tec['id']; ?></td>
-                        <td><?php echo $tec['tecnico']; ?></td> <!-- Mostrar nombre del técnico -->
-                        <td><?php echo $tec['plaza']; ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="3">No hay técnicos registrados.</td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
 </body>
 </html>

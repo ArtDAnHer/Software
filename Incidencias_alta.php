@@ -1,4 +1,12 @@
 <?php
+// Iniciar sesión solo si no está activa
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Inicializa la variable para el mensaje de éxito
+$mensaje = ''; // Inicializa la variable para el mensaje
+
 class Database {
     private $db = "insidencias";
     private $ip = "192.168.1.17";
@@ -12,143 +20,153 @@ class Database {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            echo "Error de conexión: " . $e->getMessage();
+            die("Error de conexión: " . $e->getMessage());
         }
     }
 
+    // Función para obtener los estados
+    public function getEstados() {
+        $sql = "SELECT id, estado FROM estado"; // Asegúrate de que la columna 'estado' exista en la tabla
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Función para insertar una nueva incidencia
     public function insertIncidencia($data) {
-        $sql = "INSERT INTO incidencias (fecha_reporte, quien_reporta, tipo, tipo_falla, lugar, equipo, ubicacion, descripcion, operando, imagen, reincidencia, incidencia_relacionada, estado, area, tecnico) 
-                VALUES (:fecha_reporte, :quien_reporta, :tipo, :tipo_falla, :lugar, :equipo, :ubicacion, :descripcion, :operando, :imagen, :reincidencia, :incidencia_relacionada, :estado, :area, :tecnico)";
+        $sql = "INSERT INTO incidencias (fecha_reporte, quien_reporta, tipo, tipo_falla, lugar, equipo, descripcion, operando, imagen, reincidencia, incidencia_relacionada, estado) 
+                VALUES (CURDATE(), :quien_reporta, :tipo, :tipo_falla, :lugar, :equipo,  :descripcion, :operando, :imagen, :reincidencia, :incidencia_relacionada, :estado)";
         $stmt = $this->conn->prepare($sql);
 
-        $stmt->bindParam(':fecha_reporte', $data['fecha_reporte']);
+        // Enlazar los parámetros
         $stmt->bindParam(':quien_reporta', $data['quien_reporta']);
         $stmt->bindParam(':tipo', $data['tipo']);
         $stmt->bindParam(':tipo_falla', $data['tipo_falla']);
         $stmt->bindParam(':lugar', $data['lugar']);
         $stmt->bindParam(':equipo', $data['equipo']);
-        $stmt->bindParam(':ubicacion', $data['ubicacion']);
         $stmt->bindParam(':descripcion', $data['descripcion']);
         $stmt->bindParam(':operando', $data['operando']);
         $stmt->bindParam(':imagen', $data['imagen']);
         $stmt->bindParam(':reincidencia', $data['reincidencia']);
         $stmt->bindParam(':incidencia_relacionada', $data['incidencia_relacionada']);
         $stmt->bindParam(':estado', $data['estado']);
-        $stmt->bindParam(':area', $data['area']);
-        $stmt->bindParam(':tecnico', $data['tecnico']);
 
         return $stmt->execute();
     }
 
-    public function getIncidencias() {
-        $sql = "SELECT * FROM incidencias";
-        $stmt = $this->conn->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
     public function getTipos() {
-        $sql = "SELECT * FROM tipo_equipo";
-        $stmt = $this->conn->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getTiposFalla() {
-        $sql = "SELECT * FROM tipo_falla";
-        $stmt = $this->conn->query($sql);
+        $sql = "SELECT id, nombre FROM tipo_equipo";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getEstacionamientos() {
-        $sql = "SELECT * FROM estacionamiento";
-        $stmt = $this->conn->query($sql);
+        $sql = "SELECT id, nombre FROM estacionamiento";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getEstado() {
-        $sql = "SELECT * FROM estado";
-        $stmt = $this->conn->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getArea() {
-        $sql = "SELECT * FROM area";
-        $stmt = $this->conn->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getTec() {
-        $sql = "SELECT * FROM tec ";
-        $stmt = $this->conn->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getTecnico() {
-        $sql = "SELECT * FROM tecnico ";
-        $stmt = $this->conn->query($sql);
+    public function getTipoFallas() {
+        $sql = "SELECT id, nombre FROM tipo_falla";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getEquipos() {
-        $sql = "SELECT * FROM equipos ";
-        $stmt = $this->conn->query($sql);
+        $sql = "SELECT * FROM equipos";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getTecnicoPorLugar($lugar) {
+        $sql = "SELECT * FROM tec WHERE lugar = :lugar";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':lugar', $lugar);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getEquiposPorLugar($lugar) {
+        $sql = "SELECT * FROM equipos WHERE lugar = :lugar";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':lugar', $lugar);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 
-$mensaje = '';
+// Inicialización de variables para el formulario
+$tipo = '';
+$lugar = '';
+$equipos = []; // Inicializamos el array de equipos
+$tecnico = []; 
 
+if (isset($_POST['operando']) && $_POST['operando'] === 'si') {
+    $valor = 1; // Cambiado a 1 para indicar que está operando
+} else {
+    $valor = 0; // Cambiado a 0 para indicar que no está operando
+}
+
+// Manejo del formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Manejar la subida de la imagen
-    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] == 0) {
-        $uploadDir = 'uploads/';  // Define la carpeta donde guardarás las imágenes
-        $uploadFile = $uploadDir . basename($_FILES['imagen']['name']);
+    if (isset($_SESSION['username'])) {
+        // Verificamos si se enviaron los datos necesarios
+        $data = [
+            'quien_reporta' => $_SESSION['username'],
+            'tipo' => $_POST['tipo'] ?? '',
+            'tipo_falla' => $_POST['tipo_falla'] ?? '',
+            'lugar' => $_POST['lugar'] ?? '',
+            'equipo' => $_POST['equipo'] ?? '',
+            'descripcion' => $_POST['descripcion'] ?? '',
+            'operando' => $valor,
+            'imagen' => '', // Inicia como vacío
+            'reincidencia' => ($_POST['reincidencia'] ?? '') === 'si' ? 1 : 0,
+            'incidencia_relacionada' => $_POST['incidencia_relacionada'] ?? '',
+            'estado' => $_POST['estado'] ?? '' // Captura el estado
+        ];
 
-        if (move_uploaded_file($_FILES['imagen']['tmp_name'], $uploadFile)) {
-            $imagenPath = $uploadFile;  // Ruta de la imagen a guardar en la base de datos
+        // Verifica si hay una imagen
+        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+            $nombre_archivo = basename($_FILES['imagen']['name']); // Obtener solo el nombre del archivo
+            $ruta_destino = 'uploads/' . $nombre_archivo; // Concatenar para formar la ruta completa
+
+            // Mueve la imagen al directorio de destino
+            if (move_uploaded_file($_FILES['imagen']['tmp_name'], $ruta_destino)) {
+                $data['imagen'] = $ruta_destino; // Almacena la ruta completa de la imagen
+            } else {
+                $mensaje = "Error al subir la imagen.";
+            }
         } else {
-            $imagenPath = null;  // No se subió la imagen correctamente
+            $data['imagen'] = ''; // Si no hay imagen, establece un valor vacío
+        }
+
+        // Inserta la incidencia en la base de datos
+        $db = new Database();
+        try {
+            if ($db->insertIncidencia($data)) {
+                $mensaje = "Incidencia registrada exitosamente.";
+            } else {
+                $mensaje = "Error al registrar la incidencia.";
+            }
+        } catch (PDOException $e) {
+            $mensaje = "Error en la base de datos: " . $e->getMessage();
         }
     } else {
-        $imagenPath = null;  // No se seleccionó ninguna imagen
-    }
-
-    $data = [
-        'fecha_reporte' => date('Y-m-d'),
-        'quien_reporta' => $_SESSION['username'], // Assuming the username is stored in session
-        'tipo' => isset($_POST['tipo']) ? $_POST['tipo'] : '',
-        'tipo_falla' => isset($_POST['tipo_falla']) ? $_POST['tipo_falla'] : null,
-        'lugar' => isset($_POST['lugar']) ? $_POST['lugar'] : null,
-        'equipo' => isset($_POST['equipo']) ? $_POST['equipo'] : '',
-        'ubicacion' => isset($_POST['ubicacion']) ? $_POST['ubicacion'] : '',
-        'descripcion' => isset($_POST['descripcion']) ? $_POST['descripcion'] : '',
-        'operando' => isset($_POST['operando']) ? 1 : 0,
-        'imagen' => $imagenPath,  // Guardar la ruta de la imagen en la base de datos
-        'reincidencia' => isset($_POST['reincidencia']) ? 1 : 0,
-        'incidencia_relacionada' => isset($_POST['incidencia_relacionada']) ? $_POST['incidencia_relacionada'] : null,
-        'estado' => isset($_POST['estado']) ? $_POST['estado'] : '',
-        'area' => isset($_POST['area']) ? $_POST['area'] : '',
-        'tecnico' => isset($_POST['tecnico']) ? $_POST['tecnico'] : '',
-    ];
-
-    $db = new Database();
-    if ($db->insertIncidencia($data)) {
-        $mensaje = "Incidencia registrada exitosamente.";
-    } else {
-        $mensaje = "Error al registrar la incidencia.";
+        $mensaje = "Debe iniciar sesión para registrar una incidencia.";
     }
 }
 
+// Inicialización de base de datos
 $db = new Database();
-$incidencias = $db->getIncidencias(); // Get registered incidencias
-$tipos = $db->getTipos(); // Fetch tipos for the dropdown
-$tipos_falla = $db->getTiposFalla(); // Fetch tipos_falla for the dropdown
-$estacionamiento = $db->getEstacionamientos();
-$estado = $db->getEstado();
-$area = $db->getArea();
-$tec = $db->getTec();
-$tec = $db->getTecnico();
-$equipo = $db->getEquipos();
+$tipos = $db->getTipos();
+$estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
+$tipoFallas = $db->getTipoFallas(); // Obtener los tipos de falla
+$estados = $db->getEstados(); // Obtener los estados
+$equipos = $db->getEquipos();
 ?>
 
 <!DOCTYPE html>
@@ -156,26 +174,24 @@ $equipo = $db->getEquipos();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Incidencias</title>
+    <title>Alta de Incidencias</title>
     <style>
+        /* Estilos generales */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             margin: 0;
             padding: 0;
         }
-
         h2 {
             text-align: center;
             margin-top: 20px;
         }
-
         .mensaje {
             text-align: center;
             color: green;
             margin: 10px 0;
         }
-
         form {
             background-color: #fff;
             border-radius: 8px;
@@ -184,129 +200,160 @@ $equipo = $db->getEquipos();
             margin: 20px auto;
             padding: 20px;
         }
-
         form label {
             font-weight: bold;
             margin-bottom: 5px;
             display: block;
         }
-
-        form input[type="text"], form select, form input[type="file"] {
+        form input[type="text"],
+        form select {
             width: calc(100% - 22px);
             padding: 10px;
             margin-bottom: 15px;
-            border: 1px solid #ddd;
+            border: 1px solid #ccc;
             border-radius: 4px;
         }
-
-        form button {
+        form input[type="file"] {
+            margin-bottom: 15px;
+        }
+        form input[type="submit"] {
             background-color: #28a745;
             color: white;
+            padding: 10px 15px;
             border: none;
-            padding: 10px 20px;
             border-radius: 4px;
-            font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.3s;
         }
-
-        form button:hover {
+        form input[type="submit"]:hover {
             background-color: #218838;
-        }
-
-        .hidden {
-            display: none;
         }
     </style>
 </head>
 <body>
-
     <h2>Registro de Incidencias</h2>
-    <div class="mensaje"><?= $mensaje ?></div>
 
-    <form method="POST" action="" enctype="multipart/form-data">
+    <?php if ($mensaje): ?>
+        <div class="mensaje"><?php echo $mensaje; ?></div>
+    <?php endif; ?>
+
+    <form method="post" enctype="multipart/form-data">
+        <label for="quien_reporta">Quien Reporta</label>
+        <input type="text" id="quien_reporta" name="quien_reporta" value="<?php echo $_SESSION['username']; ?>" readonly>
+
+
         <label for="tipo">Tipo de Incidencia</label>
-        <select name="tipo" id="tipo" required>
-            <option value="">Seleccione</option>
+        <select id="tipo" name="tipo" required>
+            <option value="">Seleccione Tipo</option>
             <?php foreach ($tipos as $tipo): ?>
-                <option value="<?= $tipo['nombre'] ?>"><?= $tipo['nombre'] ?></option>
+                <option value="<?php echo $tipo['id']; ?>"><?php echo $tipo['nombre']; ?></option>
             <?php endforeach; ?>
         </select>
 
         <label for="tipo_falla">Tipo de Falla</label>
-        <select name="tipo_falla" id="tipo_falla">
-            <option value="">Seleccione</option>
-            <?php foreach ($tipos_falla as $tipo_falla): ?>
-                <option value="<?= $tipo_falla['id'] ?>"><?= $tipo_falla['nombre'] ?></option>
+        <select id="tipo_falla" name="tipo_falla" required>
+            <option value="">Seleccione Tipo de Falla</option>
+            <?php foreach ($tipoFallas as $falla): ?>
+                <option value="<?php echo $falla['id']; ?>"><?php echo $falla['nombre']; ?></option>
             <?php endforeach; ?>
         </select>
 
         <label for="lugar">Lugar</label>
-        <select name="lugar" id="lugar">
-            <option value="">Seleccione</option>
-            <?php foreach ($estacionamiento as $est): ?>
-                <option value="<?= $est['id'] ?>"><?= $est['nombre'] ?></option>
+        <select id="lugar" name="lugar" required>
+            <option value="">Seleccione Lugar</option>
+            <?php foreach ($estacionamientos as $estacionamiento): ?>
+                <option value="<?php echo $estacionamiento['id']; ?>"><?php echo $estacionamiento['nombre']; ?></option>
             <?php endforeach; ?>
         </select>
 
-        <label for="estado">Estado</label>
-        <select name="estado" id="estado">
-            <option value="">Seleccione</option>
-            <?php foreach ($estado as $estado): ?>
-                <option value="<?= $estado['estado'] ?>"><?= $estado['estado'] ?></option>
-            <?php endforeach; ?>
+        <label for="equipo">Equipo</label>
+        <select id="equipos" name="equipo" required>
+            <option value="">Seleccione Equipo</option>
         </select>
 
-        <label for="descripcion">Descripcion</label>
-        <input type="text" name="descripcion" id="descripcion">
+        <label for="ubicacion">ubicacion</label>
+        <input type="text" id="ubicacion" name="ubicacion" value="<?php echo isset($equipos[0]['ubicacion']) ? $equipos[0]['ubicacion'] : ''; ?>" readonly>
 
-        <!-- Dentro del formulario -->
-        <label for="operando">Operando</label>
+        <label for="tecnico">Técnico</label>
+        <input type="text" id="tecnico" name="tecnico" value="<?php echo isset($tecnico[0]['ubicacion']) ? $tecnico[0]['ubicacion'] : ''; ?>" readonly>
+
+        <label for="descripcion">Descripción</label>
+        <input type="text" id="descripcion" name="descripcion" required>
+
+        <label for="operando">¿Está operando?</label>
         <select name="operando" id="operando" required>
-            <option value="1">Sí</option>
-            <option value="0">No</option>
+            <option value="si">Sí</option>
+            <option value="no">No</option>
         </select>
 
-        <label for="imagen">Imagen</label>
-        <input type="file" name="imagen" id="imagen" accept="image/*">
+        <label for="imagen">Subir Imagen (opcional)</label>
+        <input type="file" id="imagen" name="imagen">
 
-        <label for="reincidencia">Reincidencia</label>
-        <select name="reincidencia" id="reincidencia" required onchange="toggleIncidenciaRelacionada()">
-            <option value="0">No</option>
-            <option value="1">Sí</option>
+        <label for="reincidencia">¿Es reincidencia?</label>
+        <select name="reincidencia" id="reincidencia" required>
+            <option value="no">No</option>
+            <option value="si">Sí</option>
         </select>
 
-        <div id="incidencia-relacionada-container" class="hidden">
-            <label for="incidencia_relacionada">Incidencia relacionada</label>
-            <input type="text" name="incidencia_relacionada" id="incidencia_relacionada">
+        <div id="incidencia_relacionada_container" style="display:none;">
+            <label for="incidencia_relacionada">Incidencia Relacionada</label>
+            <input type="text" id="incidencia_relacionada" name="incidencia_relacionada">
         </div>
 
-        <label for="area">Área</label>
-        <select name="area" id="area">
-            <option value="">Seleccione</option>
-            <?php foreach ($area as $area): ?>
-                <option value="<?= $area['area'] ?>"><?= $area['area'] ?></option>
+        <label for="estado">Estado</label>
+        <select name="estado" id="estado" required>
+            <option value="">Seleccione Estado</option>
+            <?php foreach ($estados as $estado): ?>
+                <option value="<?php echo $estado['id']; ?>"><?php echo $estado['estado']; ?></option>
             <?php endforeach; ?>
         </select>
 
-        <button type="submit">Registrar Incidencia</button>
+        <input type="submit" value="Registrar Incidencia">
     </form>
 
     <script>
-        function toggleIncidenciaRelacionada() {
-            var reincidencia = document.getElementById("reincidencia").value;
-            var incidenciaRelacionadaContainer = document.getElementById("incidencia-relacionada-container");
-            
-            if (reincidencia == "1") {
-                incidenciaRelacionadaContainer.classList.remove("hidden");
+        document.getElementById('lugar').addEventListener('change', function() {
+            var lugarId = this.value;
+            console.log('Lugar seleccionado:', lugarId);
+
+            // Realiza una solicitud AJAX para obtener los equipos y técnicos
+            fetch('getEquiposYTecnicos.php?lugar=' + lugarId)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la red');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Datos recibidos:', data);
+                    
+                    // Actualiza el campo de equipos
+                    var equiposSelect = document.getElementById('equipos');
+                    equiposSelect.innerHTML = '<option value="">Seleccione Equipo</option>';
+                    data.equipos.forEach(function(equipo) {
+                        equiposSelect.innerHTML += '<option value="' + equipo.id + '">' + equipo.nombre + '</option>';
+                    });
+
+                    // Actualiza el campo de técnicos
+                    var tecnicosSelect = document.getElementById('tecnico');
+                    tecnicosSelect.innerHTML = '<option value="">Seleccione Técnico</option>';
+                    data.tecnicos.forEach(function(tecnico) {
+                        tecnicosSelect.innerHTML += '<option value="' + tecnico.id + '">' + tecnico.nombre + '</option>';
+                    });
+                })
+                .catch(error => {
+                    console.error('Error al obtener los datos:', error);
+                });
+        });
+
+        document.getElementById('reincidencia').addEventListener('change', function() {
+            var reincidenciaValue = this.value;
+            var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
+            if (reincidenciaValue === 'si') {
+                incidenciaRelacionadaContainer.style.display = 'block';
             } else {
-                incidenciaRelacionadaContainer.classList.add("hidden");
+                incidenciaRelacionadaContainer.style.display = 'none';
             }
-        }
-
-        // Llama la función al cargar la página para asegurarse que se muestre correctamente
-        toggleIncidenciaRelacionada();
+        });
     </script>
-
 </body>
 </html>

@@ -17,24 +17,22 @@ class Database {
     }
 
     public function insertEquipo($data) {
-        $sql = "INSERT INTO equipos (tipo, lugar, estado, equipo) VALUES (:tipo, :lugar, :estado, :equipo)";
+        $sql = "INSERT INTO equipos (tipo, lugar, estado, equipo, ubicacion) VALUES (:tipo, :lugar, :estado, :equipo, :ubicacion)";
         $stmt = $this->conn->prepare($sql);
 
         $stmt->bindParam(':tipo', $data['tipo']);
         $stmt->bindParam(':lugar', $data['lugar']);
         $stmt->bindParam(':estado', $data['estado']);
         $stmt->bindParam(':equipo', $data['equipo']);
+        $stmt->bindParam(':ubicacion', $data['ubicacion']);
 
         return $stmt->execute();
     }
 
     public function getEquipos() {
         // Modificación para traer los nombres de las tablas relacionadas en lugar de los IDs
-        $sql = "SELECT e.id, te.nombre AS tipo, est.nombre AS lugar, es.estado, e.equipo, e.insidencias
-                FROM equipos e
-                JOIN tipo_equipo te ON e.tipo = te.id
-                JOIN estacionamiento est ON e.lugar = est.id
-                JOIN estado es ON e.estado = es.id";
+        $sql = "SELECT * FROM equipos e ";
+
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -180,7 +178,7 @@ $lugares = $db->getLugares(); // Obtener los lugares
         <select name="tipo" id="tipo" required>
             <option value="">Seleccione un tipo</option>
             <?php foreach ($tipos as $tipo): ?>
-                <option value="<?php echo $tipo['id']; ?>"><?php echo $tipo['nombre']; ?></option>
+                <option value="<?php echo $tipo['nombre']; ?>"><?php echo $tipo['nombre']; ?></option>
             <?php endforeach; ?>
         </select>
 
@@ -188,7 +186,7 @@ $lugares = $db->getLugares(); // Obtener los lugares
         <select name="lugar" id="lugar" required>
             <option value="">Seleccione un lugar</option>
             <?php foreach ($lugares as $lugar): ?>
-                <option value="<?php echo $lugar['id']; ?>"><?php echo $lugar['nombre']; ?></option>
+                <option value="<?php echo $lugar['nombre']; ?>"><?php echo $lugar['nombre']; ?></option>
             <?php endforeach; ?>
         </select>
 
@@ -196,9 +194,12 @@ $lugares = $db->getLugares(); // Obtener los lugares
         <select name="estado" id="estado" required>
             <option value="">Seleccione un estado</option>
             <?php foreach ($estados as $estado): ?>
-                <option value="<?php echo $estado['id']; ?>"><?php echo $estado['estado']; ?></option>
+                <option value="<?php echo $estado['estado']; ?>"><?php echo $estado['estado']; ?></option>
             <?php endforeach; ?>
         </select>
+
+        <label for="ubicacion">Ubicacion</label>
+        <input type="text" name="ubicacion" id="ubicacion" required>
 
         <label for="equipo">Nombre del Equipo</label>
         <input type="text" name="equipo" id="equipo" required>
@@ -215,7 +216,7 @@ $lugares = $db->getLugares(); // Obtener los lugares
                 <th>Lugar</th>
                 <th>Estado</th>
                 <th>Equipo</th>
-                <th>Incidencias</th>
+                <th>Ubicacion</th>
             </tr>
         </thead>
         <tbody>
@@ -227,7 +228,7 @@ $lugares = $db->getLugares(); // Obtener los lugares
                         <td><?php echo $equipo['lugar']; ?></td> <!-- Mostrar el nombre del lugar -->
                         <td><?php echo $equipo['estado']; ?></td> <!-- Mostrar el estado -->
                         <td><?php echo $equipo['equipo']; ?></td>
-                        <td><?php echo $equipo['insidencias']; ?></td>
+                        <td><?php echo $equipo['ubicacion']; ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
