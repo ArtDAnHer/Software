@@ -5,10 +5,11 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Inicializa la variable para el mensaje de éxito
-$mensaje = ''; // Inicializa la variable para el mensaje
+$mensaje = '';
 
+// Clase para la conexión a la base de datos
 class Database {
-    private $db = "insidencias";
+    private $db = "insidencias"; // Nombre de la base de datos
     private $ip = "192.168.1.17";
     private $port = "3306";
     private $username = "celular";
@@ -24,18 +25,10 @@ class Database {
         }
     }
 
-    // Función para obtener los estados
-    public function getEstados() {
-        $sql = "SELECT id, estado FROM estado"; // Asegúrate de que la columna 'estado' exista en la tabla
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
     // Función para insertar una nueva incidencia
     public function insertIncidencia($data) {
-        $sql = "INSERT INTO incidencias (fecha_reporte, quien_reporta, tipo, tipo_falla, lugar, equipo, descripcion, operando, imagen, reincidencia, incidencia_relacionada, estado) 
-                VALUES (CURDATE(), :quien_reporta, :tipo, :tipo_falla, :lugar, :equipo,  :descripcion, :operando, :imagen, :reincidencia, :incidencia_relacionada, :estado)";
+        $sql = "INSERT INTO incidencias (fecha_reporte, quien_reporta, tipo, tipo_falla, lugar, equipo, descripcion, operando, imagen, reincidencia, incidencia_relacionada, estado, tecnico) 
+                VALUES (CURDATE(), :quien_reporta, :tipo, :tipo_falla, :lugar, :equipo, :descripcion, :operando, :imagen, :reincidencia, :incidencia_relacionada, :estado, :tecnico)";
         $stmt = $this->conn->prepare($sql);
 
         // Enlazar los parámetros
@@ -45,11 +38,12 @@ class Database {
         $stmt->bindParam(':lugar', $data['lugar']);
         $stmt->bindParam(':equipo', $data['equipo']);
         $stmt->bindParam(':descripcion', $data['descripcion']);
-        $stmt->bindParam(':operando', $data['operando']);
+        $stmt->bindParam(':operando', $data['operando'], PDO::PARAM_BOOL);
         $stmt->bindParam(':imagen', $data['imagen']);
-        $stmt->bindParam(':reincidencia', $data['reincidencia']);
+        $stmt->bindParam(':reincidencia', $data['reincidencia'], PDO::PARAM_BOOL);
         $stmt->bindParam(':incidencia_relacionada', $data['incidencia_relacionada']);
         $stmt->bindParam(':estado', $data['estado']);
+        $stmt->bindParam(':tecnico', $data['tecnico']);
 
         return $stmt->execute();
     }
@@ -83,33 +77,46 @@ class Database {
     }
 
     public function getTecnico() {
-        $sql = "SELECT * FROM tecnico ";
+        $sql = "SELECT * FROM tecnico";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    // Función para obtener los estados
+    public function getEstados() {
+        $sql = "SELECT id, estado FROM estado"; // Asegúrate de que la columna 'estado' exista en la tabla
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getEquiposByLugar($lugar) {
+        $sql = "SELECT * FROM equipos WHERE lugar = :lugar and tipo = :tipo";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':lugar', $lugar);
+        $stmt->bindParam(':tipo', $tipo);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTecnicoByLugar() {
+        $sql = "SELECT * FROM tecnico where lugar = :lugar";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':lugar', $lugar);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 }
 
 // Inicialización de variables para el formulario
-$tipo = '';
-$lugar = '';
-$equipos = []; // Inicializamos el array de equipos
-$equisel = [];
-$ubisel = "";
-$tecnico = []; 
-$tecsel = "";
-
-
-if (isset($_POST['operando']) && $_POST['operando'] === 'si') {
-    $valor = 1; // Cambiado a 1 para indicar que está operando
-} else {
-    $valor = 0; // Cambiado a 0 para indicar que no está operando
-}
+$mensaje = '';
 
 // Manejo del formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_SESSION['username'])) {
-        // Verificamos si se enviaron los datos necesarios
+        // Recoger los datos del formulario
         $data = [
             'quien_reporta' => $_SESSION['username'],
             'tipo' => $_POST['tipo'] ?? '',
@@ -117,26 +124,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'lugar' => $_POST['lugar'] ?? '',
             'equipo' => $_POST['equipo'] ?? '',
             'descripcion' => $_POST['descripcion'] ?? '',
-            'operando' => $valor,
-            'imagen' => '', // Inicia como vacío
+            'operando' => ($_POST['operando'] === 'si') ? 1 : 0,
+            'imagen' => '', // Inicializa como vacío
             'reincidencia' => ($_POST['reincidencia'] ?? '') === 'si' ? 1 : 0,
             'incidencia_relacionada' => $_POST['incidencia_relacionada'] ?? '',
-            'estado' => $_POST['estado'] ?? '' // Captura el estado
+            'estado' => $_POST['estado'] ?? '',
+            'tecnico' => $_POST['tecnico'] ?? '' // Captura el técnico
         ];
 
         // Verifica si hay una imagen
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
-            $nombre_archivo = basename($_FILES['imagen']['name']); // Obtener solo el nombre del archivo
-            $ruta_destino = 'uploads/' . $nombre_archivo; // Concatenar para formar la ruta completa
+            $nombre_archivo = basename($_FILES['imagen']['name']);
+            $ruta_destino = 'uploads/' . $nombre_archivo;
 
             // Mueve la imagen al directorio de destino
             if (move_uploaded_file($_FILES['imagen']['tmp_name'], $ruta_destino)) {
-                $data['imagen'] = $ruta_destino; // Almacena la ruta completa de la imagen
+                $data['imagen'] = $ruta_destino;
             } else {
                 $mensaje = "Error al subir la imagen.";
             }
-        } else {
-            $data['imagen'] = ''; // Si no hay imagen, establece un valor vacío
         }
 
         // Inserta la incidencia en la base de datos
@@ -161,8 +167,11 @@ $tipos = $db->getTipos();
 $estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
 $tipoFallas = $db->getTipoFallas(); // Obtener los tipos de falla
 $estados = $db->getEstados(); // Obtener los estados
-$equipos = $db->getEquipos();
-$tecnico = $db->getTecnico();
+$equipo = $db->getEquipos();
+$equipos = $db->getEquiposByLugar();
+$tecnico = $db->getTecnico(); // Obtener los técnicos
+$tecnicos = $db->getTecnicoByLugar(); // Obtener los técnicos
+
 ?>
 
 <!DOCTYPE html>
@@ -232,49 +241,36 @@ $tecnico = $db->getTecnico();
         <div class="mensaje"><?php echo $mensaje; ?></div>
     <?php endif; ?>
 
-    <form method="post" enctype="multipart/form-data">
-        <label for="quien_reporta">Quien Reporta</label>
-        <input type="text" id="quien_reporta" name="quien_reporta" value="<?php echo $_SESSION['username']; ?>" readonly>
-
-
-        <label for="tipo">Tipo de Incidencia</label>
+    <form action="" method="POST" enctype="multipart/form-data">
+        <label for="tipo">Tipo</label>
         <select id="tipo" name="tipo" required>
             <option value="">Seleccione Tipo</option>
             <?php foreach ($tipos as $tipo): ?>
-                <option value="<?php echo $tipo['id']; ?>"><?php echo $tipo['nombre']; ?></option>
+                <option value="<?php echo $tipo['nombre']; ?>"><?php echo $tipo['nombre']; ?></option>
             <?php endforeach; ?>
         </select>
 
         <label for="tipo_falla">Tipo de Falla</label>
         <select id="tipo_falla" name="tipo_falla" required>
             <option value="">Seleccione Tipo de Falla</option>
-            <?php foreach ($tipoFallas as $falla): ?>
-                <option value="<?php echo $falla['id']; ?>"><?php echo $falla['nombre']; ?></option>
+            <?php foreach ($tipoFallas as $tipoFalla): ?>
+                <option value="<?php echo $tipoFalla['nombre']; ?>"><?php echo $tipoFalla['nombre']; ?></option>
             <?php endforeach; ?>
         </select>
 
-        <label for="lugar">Lugar</label>
+        <label for="lugar">Estacionamiento</label>
         <select id="lugar" name="lugar" required>
-            <option value="">Seleccione Lugar</option>
+            <option value="">Seleccione Estacionamiento</option>
             <?php foreach ($estacionamientos as $estacionamiento): ?>
-                <option value="<?php echo $estacionamiento['id']; ?>"><?php echo $estacionamiento['nombre']; ?></option>
+                <option value="<?php echo $estacionamiento['nombre']; ?>"><?php echo $estacionamiento['nombre']; ?></option>
             <?php endforeach; ?>
         </select>
 
         <label for="equipo">Equipo</label>
-        <select id="equipos" name="equipo" required>
-            <option value="">Seleccione Lugar</option>
-            <?php foreach ($equipos as $equipos): ?>
-                <option value="<?php echo $equipos['equipo']; ?>"><?php echo $equipos['equipo']; ?></option>
-            <?php endforeach; ?>
-        </select>
-
-
-        <label for="tecnico">Tecnico</label>
-        <select id="equipos" name="equipo" required>
-            <option value="">Seleccione Lugar</option>
-            <?php foreach ($tecnico as $tecnico): ?>
-                <option value="<?php echo $tecnico['tecnico']; ?>"><?php echo $tecnico['tecnico']; ?></option>
+        <select id="equipo" name="equipo" required>
+            <option value="">Seleccione Equipo</option>
+            <?php foreach ($equipos as $equipo): ?>
+                <option value="<?php echo $equipo['equipo']; ?>"><?php echo $equipo['equipo']; ?></option>
             <?php endforeach; ?>
         </select>
 
@@ -282,12 +278,12 @@ $tecnico = $db->getTecnico();
         <input type="text" id="descripcion" name="descripcion" required>
 
         <label for="operando">¿Está operando?</label>
-        <select name="operando" id="operando" required>
+        <select id="operando" name="operando">
             <option value="si">Sí</option>
             <option value="no">No</option>
         </select>
 
-        <label for="imagen">Subir Imagen (opcional)</label>
+        <label for="imagen">Imagen</label>
         <input type="file" id="imagen" name="imagen">
 
         <label for="reincidencia">¿Es reincidencia?</label>
@@ -302,10 +298,18 @@ $tecnico = $db->getTecnico();
         </div>
 
         <label for="estado">Estado</label>
-        <select name="estado" id="estado" required>
+        <select id="estado" name="estado" required>
             <option value="">Seleccione Estado</option>
             <?php foreach ($estados as $estado): ?>
-                <option value="<?php echo $estado['id']; ?>"><?php echo $estado['estado']; ?></option>
+                <option value="<?php echo $estado['estado']; ?>"><?php echo $estado['estado']; ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="tecnico">Técnico</label>
+        <select id="tecnico" name="tecnico" required>
+            <option value="">Seleccione Técnico</option>
+            <?php foreach ($tecnicos as $tec): ?>
+                <option value="<?php echo $tec['tecnico']; ?>"><?php echo $tec['tecnico']; ?></option>
             <?php endforeach; ?>
         </select>
 
@@ -314,30 +318,31 @@ $tecnico = $db->getTecnico();
 
     <script>
 
-        document.getElementById('reincidencia').addEventListener('change', function() {
-            var reincidenciaValue = this.value;
-            var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
-            
-            if (reincidenciaValue === 'si') {
-                incidenciaRelacionadaContainer.style.display = 'block'; // Mostrar campo
-            } 
-            else {
-                incidenciaRelacionadaContainer.style.display = 'none'; // Ocultar campo
-            }
-        });
+document.getElementById('reincidencia').addEventListener('change', function() {
+    var reincidenciaValue = this.value;
+    var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
+    
+    if (reincidenciaValue === 'si') {
+        incidenciaRelacionadaContainer.style.display = 'block'; // Mostrar campo
+    } 
+    else {
+        incidenciaRelacionadaContainer.style.display = 'none'; // Ocultar campo
+    }
+});
 
-        // Verificar el valor inicial al cargar la página
-        window.onload = function() {
-            var reincidenciaValue = document.getElementById('reincidencia').value;
-            var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
-            
-            if (reincidenciaValue === 'si') {
-                incidenciaRelacionadaContainer.style.display = 'block'; // Mostrar campo
-            } else {
-                incidenciaRelacionadaContainer.style.display = 'none'; // Ocultar campo
-            }
-        };
+// Verificar el valor inicial al cargar la página
+window.onload = function() {
+    var reincidenciaValue = document.getElementById('reincidencia').value;
+    var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
+    
+    if (reincidenciaValue === 'si') {
+        incidenciaRelacionadaContainer.style.display = 'block'; // Mostrar campo
+    } else {
+        incidenciaRelacionadaContainer.style.display = 'none'; // Ocultar campo
+    }
+};
 
-    </script>
+</script>
+
 </body>
 </html>
