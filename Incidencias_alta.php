@@ -82,15 +82,8 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getTecnicoPorLugar() {
-        $sql = "SELECT * FROM tec ";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getEquiposPorLugar() {
-        $sql = "SELECT * FROM equipos";
+    public function getTecnico() {
+        $sql = "SELECT * FROM tecnico ";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -168,8 +161,8 @@ $tipos = $db->getTipos();
 $estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
 $tipoFallas = $db->getTipoFallas(); // Obtener los tipos de falla
 $estados = $db->getEstados(); // Obtener los estados
-$equipos = $db->getEquiposPorLugar();
-$tecnico = $db->getTecnicoPorLugar();
+$equipos = $db->getEquipos();
+$tecnico = $db->getTecnico();
 ?>
 
 <!DOCTYPE html>
@@ -276,12 +269,14 @@ $tecnico = $db->getTecnicoPorLugar();
             <?php endforeach; ?>
         </select>
 
-        <label for="ubicacion">Ubicacion</label>
-        <input type="text" id="ubicacion" name="ubicacion" value="<?php  ?>" readonly>
-
 
         <label for="tecnico">Tecnico</label>
-        <input type="text" id="quien_reporta" name="quien_reporta" value="<?php echo $tecsel; ?>" readonly>
+        <select id="equipos" name="equipo" required>
+            <option value="">Seleccione Lugar</option>
+            <?php foreach ($tecnico as $tecnico): ?>
+                <option value="<?php echo $tecnico['tecnico']; ?>"><?php echo $tecnico['tecnico']; ?></option>
+            <?php endforeach; ?>
+        </select>
 
         <label for="descripcion">Descripción</label>
         <input type="text" id="descripcion" name="descripcion" required>
