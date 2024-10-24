@@ -82,18 +82,16 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getTecnicoPorLugar($lugar) {
-        $sql = "SELECT * FROM tec WHERE lugar = :lugar";
+    public function getTecnicoPorLugar() {
+        $sql = "SELECT * FROM tec ";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':lugar', $lugar);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getEquiposPorLugar($lugar) {
-        $sql = "SELECT * FROM equipos WHERE lugar = :lugar";
+    public function getEquiposPorLugar() {
+        $sql = "SELECT * FROM equipos";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':lugar', $lugar);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -103,7 +101,11 @@ class Database {
 $tipo = '';
 $lugar = '';
 $equipos = []; // Inicializamos el array de equipos
+$equisel = [];
+$ubisel = "";
 $tecnico = []; 
+$tecsel = "";
+
 
 if (isset($_POST['operando']) && $_POST['operando'] === 'si') {
     $valor = 1; // Cambiado a 1 para indicar que está operando
@@ -166,7 +168,8 @@ $tipos = $db->getTipos();
 $estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
 $tipoFallas = $db->getTipoFallas(); // Obtener los tipos de falla
 $estados = $db->getEstados(); // Obtener los estados
-$equipos = $db->getEquipos();
+$equipos = $db->getEquiposPorLugar();
+$tecnico = $db->getTecnicoPorLugar();
 ?>
 
 <!DOCTYPE html>
@@ -267,14 +270,18 @@ $equipos = $db->getEquipos();
 
         <label for="equipo">Equipo</label>
         <select id="equipos" name="equipo" required>
-            <option value="">Seleccione Equipo</option>
+            <option value="">Seleccione Lugar</option>
+            <?php foreach ($equipos as $equipos): ?>
+                <option value="<?php echo $equipos['equipo']; ?>"><?php echo $equipos['equipo']; ?></option>
+            <?php endforeach; ?>
         </select>
 
-        <label for="ubicacion">ubicacion</label>
-        <input type="text" id="ubicacion" name="ubicacion" value="<?php echo isset($equipos[0]['ubicacion']) ? $equipos[0]['ubicacion'] : ''; ?>" readonly>
+        <label for="ubicacion">Ubicacion</label>
+        <input type="text" id="ubicacion" name="ubicacion" value="<?php  ?>" readonly>
 
-        <label for="tecnico">Técnico</label>
-        <input type="text" id="tecnico" name="tecnico" value="<?php echo isset($tecnico[0]['ubicacion']) ? $tecnico[0]['ubicacion'] : ''; ?>" readonly>
+
+        <label for="tecnico">Tecnico</label>
+        <input type="text" id="quien_reporta" name="quien_reporta" value="<?php echo $tecsel; ?>" readonly>
 
         <label for="descripcion">Descripción</label>
         <input type="text" id="descripcion" name="descripcion" required>
@@ -311,49 +318,31 @@ $equipos = $db->getEquipos();
     </form>
 
     <script>
-        document.getElementById('lugar').addEventListener('change', function() {
-            var lugarId = this.value;
-            console.log('Lugar seleccionado:', lugarId);
-
-            // Realiza una solicitud AJAX para obtener los equipos y técnicos
-            fetch('getEquiposYTecnicos.php?lugar=' + lugarId)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Error en la red');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Datos recibidos:', data);
-                    
-                    // Actualiza el campo de equipos
-                    var equiposSelect = document.getElementById('equipos');
-                    equiposSelect.innerHTML = '<option value="">Seleccione Equipo</option>';
-                    data.equipos.forEach(function(equipo) {
-                        equiposSelect.innerHTML += '<option value="' + equipo.id + '">' + equipo.nombre + '</option>';
-                    });
-
-                    // Actualiza el campo de técnicos
-                    var tecnicosSelect = document.getElementById('tecnico');
-                    tecnicosSelect.innerHTML = '<option value="">Seleccione Técnico</option>';
-                    data.tecnicos.forEach(function(tecnico) {
-                        tecnicosSelect.innerHTML += '<option value="' + tecnico.id + '">' + tecnico.nombre + '</option>';
-                    });
-                })
-                .catch(error => {
-                    console.error('Error al obtener los datos:', error);
-                });
-        });
 
         document.getElementById('reincidencia').addEventListener('change', function() {
             var reincidenciaValue = this.value;
             var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
+            
             if (reincidenciaValue === 'si') {
-                incidenciaRelacionadaContainer.style.display = 'block';
-            } else {
-                incidenciaRelacionadaContainer.style.display = 'none';
+                incidenciaRelacionadaContainer.style.display = 'block'; // Mostrar campo
+            } 
+            else {
+                incidenciaRelacionadaContainer.style.display = 'none'; // Ocultar campo
             }
         });
+
+        // Verificar el valor inicial al cargar la página
+        window.onload = function() {
+            var reincidenciaValue = document.getElementById('reincidencia').value;
+            var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
+            
+            if (reincidenciaValue === 'si') {
+                incidenciaRelacionadaContainer.style.display = 'block'; // Mostrar campo
+            } else {
+                incidenciaRelacionadaContainer.style.display = 'none'; // Ocultar campo
+            }
+        };
+
     </script>
 </body>
 </html>
