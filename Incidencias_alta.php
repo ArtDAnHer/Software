@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Inicializa la variable para el mensaje de éxito
 $mensaje = '';
+$exito = false; // Variable para verificar el éxito de la inserción
 
 // Clase para la conexión a la base de datos
 class Database {
@@ -48,7 +49,6 @@ class Database {
         return false;
     }
     
-
     // Funciones para obtener datos para los selects
     public function getTipos() {
         $sql = "SELECT id, nombre FROM tipo_equipo"; // Cambiar según tu estructura de datos
@@ -114,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             if ($db->insertIncidencia($data)) {
                 $mensaje = "Incidencia registrada exitosamente.";
+                $exito = true; // Marcar el éxito
             } else {
                 $mensaje = "Error al registrar la incidencia.";
             }
@@ -220,10 +221,10 @@ $estados = $db->getEstados();
     </select>
 
     <label for="descripcion">Descripción:</label>
-    <textarea name="descripcion" rows="4" required></textarea>
+    <textarea name="descripcion" required></textarea>
 
-    <label for="operando">¿Está operando?</label>
-    <select name="operando" required>
+    <label>¿Operando?</label>
+    <select name="operando">
         <option value="si">Sí</option>
         <option value="no">No</option>
     </select>
@@ -231,16 +232,14 @@ $estados = $db->getEstados();
     <label for="imagen">Imagen:</label>
     <input type="file" name="imagen" accept="image/*">
 
-    <label for="reincidencia">¿Es reincidencia?</label>
-    <select name="reincidencia" id="reincidencia" required>
-        <option value="no">No</option>
+    <label>¿Reincidencia?</label>
+    <select name="reincidencia">
         <option value="si">Sí</option>
+        <option value="no">No</option>
     </select>
 
-    <div id="incidencia_relacionada_container" style="display:none;">
-        <label for="incidencia_relacionada">Incidencia Relacionada</label>
-        <input type="text" id="incidencia_relacionada" name="incidencia_relacionada">
-    </div>
+    <label for="incidencia_relacionada">Incidencia Relacionada:</label>
+    <input type="text" name="incidencia_relacionada">
 
     <label for="estado">Estado:</label>
     <select name="estado" required>
@@ -250,30 +249,15 @@ $estados = $db->getEstados();
         <?php endforeach; ?>
     </select>
 
-    <button type="submit" onclick="abrirPopup()">Seleccionar Técnico</button>
-
+    <input type="submit" value="Registrar Incidencia">
 </form>
 
 <script>
-
-        document.getElementById('reincidencia').addEventListener('change', function() {
-            var reincidenciaValue = this.value;
-            var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
-            
-            if (reincidenciaValue === 'si') {
-                incidenciaRelacionadaContainer.style.display = 'block'; // Mostrar campo
-            } 
-            else {
-                incidenciaRelacionadaContainer.style.display = 'none'; // Ocultar campo
-            }
-        });
-
-        function abrirPopup() {
-            // Abre una nueva ventana popup con el documento seleccionar_tecnico.php
-            window.open("seleccionar_tecnico.php", "popup", "width=600,height=400,scrollbars=yes,resizable=yes");
-        }
-
-    </script>
+    <?php if ($exito): ?>
+        // Abre el pop-up para seleccionar el técnico solo si la incidencia se registró correctamente
+        window.open("seleccionar_tecnico.php", "popup", "width=600,height=400,scrollbars=yes,resizable=yes");
+    <?php endif; ?>
+</script>
 
 </body>
 </html>

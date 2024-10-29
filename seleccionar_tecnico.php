@@ -5,11 +5,11 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 class Database {
-    private $db = "insidencias"; // Nombre de la base de datos
-    private $ip = "192.168.1.17"; // Cambia esto según tu configuración
-    private $port = "3306"; // Cambia esto si es necesario
-    private $username = "celular"; // Cambia esto según tu configuración
-    private $password = "Coemsa.2024"; // Cambia esto según tu configuración
+    private $db = "insidencias";
+    private $ip = "192.168.1.17";
+    private $port = "3306";
+    private $username = "celular";
+    private $password = "Coemsa.2024";
     private $conn;
 
     public function __construct() {
@@ -21,36 +21,56 @@ class Database {
         }
     }
 
+    public function getLastIncidencia() {
+        $sql = "SELECT * FROM incidencias ORDER BY id DESC LIMIT 1";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function asignarTecnico($tecnico, $area, $incidencia_id) {
+        $sql = "UPDATE incidencias SET tecnico = :tecnico, area = :area WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':tecnico', $tecnico);
+        $stmt->bindParam(':area', $area);
+        $stmt->bindParam(':id', $incidencia_id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function getTecnicos() {
+        $sql = "SELECT * FROM tecnico";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getAreas() {
+        $sql = "SELECT DISTINCT area FROM tecnico";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 
-// Inicializa la base de datos
+// Inicializar la base de datos
 $db = new Database();
 
-// Verificar si se ha enviado el formulario para asignar el técnico
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+// Obtener la última incidencia registrada
+$ultimaIncidencia = $db->getLastIncidencia();
+
+// Obtener técnicos y áreas para los selectores
+$tecnicos = $db->getTecnicos();
+$areas = $db->getAreas();
+
+// Procesar el formulario de asignación de técnico
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['incidencia_id'])) {
     $incidencia_id = $_POST['incidencia_id'];
     $tecnico = $_POST['tecnico'];
     $area = $_POST['area'];
 
-    // Asignar el técnico y el área a la incidencia
     if ($db->asignarTecnico($tecnico, $area, $incidencia_id)) {
         echo "Técnico y área asignados exitosamente.";
     } else {
         echo "Error al asignar el técnico y el área.";
     }
 }
-
-// Obtener la incidencia por ID (pasada por la URL o formulario)
-if (isset($_GET['id'])) {
-    $incidencia_id = $_GET['id'];
-    $incidencia = $db->getIncidenciaById($incidencia_id);
-} else {
-    die("ID de incidencia no especificado.");
-}
-
-// Obtener técnicos y áreas
-$tecnicos = $db->getTecnicos();
-$areas = $db->getAreas();
 ?>
 
 <!DOCTYPE html>
@@ -58,7 +78,7 @@ $areas = $db->getAreas();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asignar Técnico y Área</title>
+    <title>Última Incidencia Registrada</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -72,7 +92,7 @@ $areas = $db->getAreas();
             margin-top: 20px;
         }
 
-        form {
+        .container {
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -81,21 +101,26 @@ $areas = $db->getAreas();
             padding: 20px;
         }
 
-        form label {
+        label {
             font-weight: bold;
             margin-bottom: 5px;
             display: block;
         }
 
-        form select {
-            width: calc(100% - 22px);
+        .field-value, select {
+            width: 100%;
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
 
-        form button {
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
             background-color: #28a745;
             color: white;
             border: none;
@@ -106,28 +131,56 @@ $areas = $db->getAreas();
             transition: background-color 0.3s;
         }
 
-        form button:hover {
+        button:hover {
             background-color: #218838;
         }
     </style>
 </head>
 <body>
-    <h2>Asignar Técnico y Área a la Incidencia</h2>
-    <label for="equipo">Equipo</label>
-        <select id="equipos" name="equipo" required>
-            <option value="">Seleccione Lugar</option>
-            <?php foreach ($equipos as $equipos): ?>
-                <option value="<?php echo $equipos['equipo']; ?>"><?php echo $equipos['equipo']; ?></option>
-            <?php endforeach; ?>
-        </select>
 
-        <label for="ubicacion">Ubicacion</label>
-        <input type="text" id="ubicacion" name="ubicacion" value="<?php echo $ubisel ?>" readonly>
+    <h2>Última Incidencia Registrada</h2>
 
+    <div class="container">
+        <?php if ($ultimaIncidencia): ?>
+            <label>ID:</label>
+            <div class="field-value"><?php echo htmlspecialchars($ultimaIncidencia['id']); ?></div>
 
-        <label for="tecnico">Tecnico</label>
-        <input type="text" id="quien_reporta" name="quien_reporta" value="<?php echo $tecsel; ?>" readonly>    
+            <label>Fecha de Reporte:</label>
+            <div class="field-value"><?php echo htmlspecialchars($ultimaIncidencia['fecha_reporte']); ?></div>
 
-        <input type="submit" value="Registrar Incidencia">
+            <label>Quien Reporta:</label>
+            <div class="field-value"><?php echo htmlspecialchars($ultimaIncidencia['quien_reporta']); ?></div>
+
+            <label>Equipo:</label>
+            <div class="field-value"><?php echo htmlspecialchars($ultimaIncidencia['equipo']); ?></div>
+
+            <form method="POST" action="">
+                <input type="hidden" name="incidencia_id" value="<?php echo htmlspecialchars($ultimaIncidencia['id']); ?>">
+
+                <label for="tecnico">Técnico:</label>
+                <select id="tecnico" name="tecnico" required>
+                    <option value="">Seleccione Técnico</option>
+                    <?php foreach ($tecnicos as $tecnico): ?>
+                        <option value="<?php echo htmlspecialchars($tecnico['tecnico']); ?>"><?php echo htmlspecialchars($tecnico['tecnico']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+
+                <label for="area">Área:</label>
+                <select id="area" name="area" required>
+                    <option value="">Seleccione Área</option>
+                    <?php foreach ($areas as $area): ?>
+                        <option value="<?php echo htmlspecialchars($area['area']); ?>"><?php echo htmlspecialchars($area['area']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+
+                <div class="button-container">
+                    <button type="submit">Asignar Técnico y Área</button>
+                </div>
+            </form>
+        <?php else: ?>
+            <p>No se encontró ninguna incidencia registrada.</p>
+        <?php endif; ?>
+    </div>
+
 </body>
 </html>
