@@ -21,34 +21,6 @@ class Database {
         }
     }
 
-    public function getIncidenciaById($id) {
-        $stmt = $this->conn->prepare("SELECT * FROM incidencias WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    public function asignarTecnico($tecnico, $area, $incidencia_id) {
-        $stmt = $this->conn->prepare("UPDATE incidencias SET tecnico = :tecnico, area = :area WHERE id = :id");
-        $stmt->bindParam(':tecnico', $tecnico);
-        $stmt->bindParam(':area', $area);
-        $stmt->bindParam(':id', $incidencia_id, PDO::PARAM_INT);
-        return $stmt->execute();
-    }
-
-    public function getTecnicos() {
-        $sql = "SELECT id, tecnico FROM tecnico";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getAreas() {
-        $sql = "SELECT id, area FROM area";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
 }
 
 // Inicializa la base de datos
@@ -141,31 +113,21 @@ $areas = $db->getAreas();
 </head>
 <body>
     <h2>Asignar Técnico y Área a la Incidencia</h2>
-
-    <form method="POST" action="">
-        <input type="hidden" name="incidencia_id" value="<?php echo htmlspecialchars($incidencia['id']); ?>">
-
-        <label for="area">Área:</label>
-        <select name="area" id="area" required>
-            <option value="">Selecciona un área</option>
-            <?php foreach ($areas as $ar): ?>
-                <option value="<?php echo htmlspecialchars($ar['area']); ?>" <?php echo $incidencia['area'] === $ar['area'] ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($ar['area']); ?>
-                </option>
+    <label for="equipo">Equipo</label>
+        <select id="equipos" name="equipo" required>
+            <option value="">Seleccione Lugar</option>
+            <?php foreach ($equipos as $equipos): ?>
+                <option value="<?php echo $equipos['equipo']; ?>"><?php echo $equipos['equipo']; ?></option>
             <?php endforeach; ?>
         </select>
 
-        <label for="tecnico">Técnico:</label>
-        <select name="tecnico" id="tecnico" required>
-            <option value="">Selecciona un técnico</option>
-            <?php foreach ($tecnicos as $tec): ?>
-                <option value="<?php echo htmlspecialchars($tec['tecnico']); ?>" <?php echo $incidencia['tecnico'] === $tec['tecnico'] ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($tec['tecnico']); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <label for="ubicacion">Ubicacion</label>
+        <input type="text" id="ubicacion" name="ubicacion" value="<?php echo $ubisel ?>" readonly>
 
-        <button type="submit">Asignar Técnico y Área</button>
-    </form>
+
+        <label for="tecnico">Tecnico</label>
+        <input type="text" id="quien_reporta" name="quien_reporta" value="<?php echo $tecsel; ?>" readonly>    
+
+        <input type="submit" value="Registrar Incidencia">
 </body>
 </html>

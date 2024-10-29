@@ -25,18 +25,15 @@ class Database {
         }
     }
 
-    // Función para insertar una nueva incidencia
     public function insertIncidencia($data) {
-        $sql = "INSERT INTO incidencias (fecha_reporte, quien_reporta, tipo, tipo_falla, lugar, equipo, descripcion, operando, imagen, reincidencia, incidencia_relacionada, estado, tecnico) 
-                VALUES (CURDATE(), :quien_reporta, :tipo, :tipo_falla, :lugar, :equipo, :descripcion, :operando, :imagen, :reincidencia, :incidencia_relacionada, :estado, :tecnico)";
+        $sql = "INSERT INTO incidencias (fecha_reporte, quien_reporta, tipo, tipo_falla, lugar, descripcion, operando, imagen, reincidencia, incidencia_relacionada, estado, tecnico) 
+                VALUES (CURDATE(), :quien_reporta, :tipo, :tipo_falla, :lugar, :descripcion, :operando, :imagen, :reincidencia, :incidencia_relacionada, :estado, :tecnico)";
         $stmt = $this->conn->prepare($sql);
-
-        // Enlazar los parámetros
+    
         $stmt->bindParam(':quien_reporta', $data['quien_reporta']);
         $stmt->bindParam(':tipo', $data['tipo']);
         $stmt->bindParam(':tipo_falla', $data['tipo_falla']);
         $stmt->bindParam(':lugar', $data['lugar']);
-        $stmt->bindParam(':equipo', $data['equipo']);
         $stmt->bindParam(':descripcion', $data['descripcion']);
         $stmt->bindParam(':operando', $data['operando'], PDO::PARAM_BOOL);
         $stmt->bindParam(':imagen', $data['imagen']);
@@ -44,74 +41,43 @@ class Database {
         $stmt->bindParam(':incidencia_relacionada', $data['incidencia_relacionada']);
         $stmt->bindParam(':estado', $data['estado']);
         $stmt->bindParam(':tecnico', $data['tecnico']);
-
-        return $stmt->execute();
+    
+        if ($stmt->execute()) {
+            return $this->conn->lastInsertId();
+        }
+        return false;
     }
+    
 
+    // Funciones para obtener datos para los selects
     public function getTipos() {
-        $sql = "SELECT id, nombre FROM tipo_equipo";
+        $sql = "SELECT id, nombre FROM tipo_equipo"; // Cambiar según tu estructura de datos
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getEstacionamientos() {
-        $sql = "SELECT id, nombre FROM estacionamiento";
+        $sql = "SELECT id, nombre FROM estacionamiento"; // Cambiar según tu estructura de datos
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getTipoFallas() {
-        $sql = "SELECT id, nombre FROM tipo_falla";
+        $sql = "SELECT id, nombre FROM tipo_falla"; // Cambiar según tu estructura de datos
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getEquipos() {
-        $sql = "SELECT * FROM equipos";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getTecnico() {
-        $sql = "SELECT * FROM tecnico";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Función para obtener los estados
     public function getEstados() {
-        $sql = "SELECT id, estado FROM estado"; // Asegúrate de que la columna 'estado' exista en la tabla
+        $sql = "SELECT id, estado FROM estado"; // Cambiar según tu estructura de datos
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
-    public function getEquiposByLugar($lugar) {
-        $sql = "SELECT * FROM equipos WHERE lugar = :lugar and tipo = :tipo";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':lugar', $lugar);
-        $stmt->bindParam(':tipo', $tipo);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getTecnicoByLugar() {
-        $sql = "SELECT * FROM tecnico where lugar = :lugar";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':lugar', $lugar);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
 }
-
-// Inicialización de variables para el formulario
-$mensaje = '';
 
 // Manejo del formulario
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -122,14 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'tipo' => $_POST['tipo'] ?? '',
             'tipo_falla' => $_POST['tipo_falla'] ?? '',
             'lugar' => $_POST['lugar'] ?? '',
-            'equipo' => $_POST['equipo'] ?? '',
             'descripcion' => $_POST['descripcion'] ?? '',
-            'operando' => ($_POST['operando'] === 'si') ? 1 : 0,
+            'operando' => isset($_POST['operando']) && $_POST['operando'] === 'si' ? 1 : 0,
             'imagen' => '', // Inicializa como vacío
             'reincidencia' => ($_POST['reincidencia'] ?? '') === 'si' ? 1 : 0,
             'incidencia_relacionada' => $_POST['incidencia_relacionada'] ?? '',
             'estado' => $_POST['estado'] ?? '',
-            'tecnico' => $_POST['tecnico'] ?? '' // Captura el técnico
         ];
 
         // Verifica si hay una imagen
@@ -164,13 +128,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // Inicialización de base de datos
 $db = new Database();
 $tipos = $db->getTipos();
-$estacionamientos = $db->getEstacionamientos(); // Obtener los estacionamientos
-$tipoFallas = $db->getTipoFallas(); // Obtener los tipos de falla
-$estados = $db->getEstados(); // Obtener los estados
-$equipo = $db->getEquipos();
-$equipos = $db->getEquiposByLugar();
-$tecnico = $db->getTecnico(); // Obtener los técnicos
-$tecnicos = $db->getTecnicoByLugar(); // Obtener los técnicos
+$estacionamientos = $db->getEstacionamientos();
+$tipoFallas = $db->getTipoFallas();
+$estados = $db->getEstados();
 
 ?>
 
@@ -201,148 +161,119 @@ $tecnicos = $db->getTecnicoByLugar(); // Obtener los técnicos
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: 20px auto;
             padding: 20px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 500px;
         }
-        form label {
-            font-weight: bold;
-            margin-bottom: 5px;
+        label {
             display: block;
+            margin-bottom: 8px;
         }
-        form input[type="text"],
-        form select {
-            width: calc(100% - 22px);
-            padding: 10px;
+        select, input[type="text"], textarea {
+            width: 100%;
+            padding: 8px;
             margin-bottom: 15px;
-            border: 1px solid #ccc;
             border-radius: 4px;
+            border: 1px solid #ccc;
         }
-        form input[type="file"] {
-            margin-bottom: 15px;
-        }
-        form input[type="submit"] {
+        input[type="submit"] {
             background-color: #28a745;
             color: white;
-            padding: 10px 15px;
             border: none;
-            border-radius: 4px;
+            padding: 10px;
+            border-radius: 5px;
             cursor: pointer;
         }
-        form input[type="submit"]:hover {
+        input[type="submit"]:hover {
             background-color: #218838;
         }
     </style>
 </head>
 <body>
-    <h2>Registro de Incidencias</h2>
 
-    <?php if ($mensaje): ?>
-        <div class="mensaje"><?php echo $mensaje; ?></div>
-    <?php endif; ?>
+<h2>Registro de Incidencias</h2>
+<div class="mensaje"><?php echo $mensaje; ?></div>
+<form method="POST" enctype="multipart/form-data">
+    <label for="tipo">Tipo de Incidencia:</label>
+    <select name="tipo" required>
+        <option value="">Seleccione un tipo</option>
+        <?php foreach ($tipos as $tipo): ?>
+            <option value="<?php echo $tipo['nombre']; ?>"><?php echo $tipo['nombre']; ?></option>
+        <?php endforeach; ?>
+    </select>
 
-    <form action="" method="POST" enctype="multipart/form-data">
-        <label for="tipo">Tipo</label>
-        <select id="tipo" name="tipo" required>
-            <option value="">Seleccione Tipo</option>
-            <?php foreach ($tipos as $tipo): ?>
-                <option value="<?php echo $tipo['nombre']; ?>"><?php echo $tipo['nombre']; ?></option>
-            <?php endforeach; ?>
-        </select>
+    <label for="tipo_falla">Tipo de Falla:</label>
+    <select name="tipo_falla" required>
+        <option value="">Seleccione un tipo de falla</option>
+        <?php foreach ($tipoFallas as $tipoFalla): ?>
+            <option value="<?php echo $tipoFalla['nombre']; ?>"><?php echo $tipoFalla['nombre']; ?></option>
+        <?php endforeach; ?>
+    </select>
 
-        <label for="tipo_falla">Tipo de Falla</label>
-        <select id="tipo_falla" name="tipo_falla" required>
-            <option value="">Seleccione Tipo de Falla</option>
-            <?php foreach ($tipoFallas as $tipoFalla): ?>
-                <option value="<?php echo $tipoFalla['nombre']; ?>"><?php echo $tipoFalla['nombre']; ?></option>
-            <?php endforeach; ?>
-        </select>
+    <label for="lugar">Estacionamiento:</label>
+    <select name="lugar" required>
+        <option value="">Seleccione un estacionamiento</option>
+        <?php foreach ($estacionamientos as $estacionamiento): ?>
+            <option value="<?php echo $estacionamiento['nombre']; ?>"><?php echo $estacionamiento['nombre']; ?></option>
+        <?php endforeach; ?>
+    </select>
 
-        <label for="lugar">Estacionamiento</label>
-        <select id="lugar" name="lugar" required>
-            <option value="">Seleccione Estacionamiento</option>
-            <?php foreach ($estacionamientos as $estacionamiento): ?>
-                <option value="<?php echo $estacionamiento['nombre']; ?>"><?php echo $estacionamiento['nombre']; ?></option>
-            <?php endforeach; ?>
-        </select>
+    <label for="descripcion">Descripción:</label>
+    <textarea name="descripcion" rows="4" required></textarea>
 
-        <label for="equipo">Equipo</label>
-        <select id="equipo" name="equipo" required>
-            <option value="">Seleccione Equipo</option>
-            <?php foreach ($equipos as $equipo): ?>
-                <option value="<?php echo $equipo['equipo']; ?>"><?php echo $equipo['equipo']; ?></option>
-            <?php endforeach; ?>
-        </select>
+    <label for="operando">¿Está operando?</label>
+    <select name="operando" required>
+        <option value="si">Sí</option>
+        <option value="no">No</option>
+    </select>
 
-        <label for="descripcion">Descripción</label>
-        <input type="text" id="descripcion" name="descripcion" required>
+    <label for="imagen">Imagen:</label>
+    <input type="file" name="imagen" accept="image/*">
 
-        <label for="operando">¿Está operando?</label>
-        <select id="operando" name="operando">
-            <option value="si">Sí</option>
-            <option value="no">No</option>
-        </select>
+    <label for="reincidencia">¿Es reincidencia?</label>
+    <select name="reincidencia" id="reincidencia" required>
+        <option value="no">No</option>
+        <option value="si">Sí</option>
+    </select>
 
-        <label for="imagen">Imagen</label>
-        <input type="file" id="imagen" name="imagen">
+    <div id="incidencia_relacionada_container" style="display:none;">
+        <label for="incidencia_relacionada">Incidencia Relacionada</label>
+        <input type="text" id="incidencia_relacionada" name="incidencia_relacionada">
+    </div>
 
-        <label for="reincidencia">¿Es reincidencia?</label>
-        <select name="reincidencia" id="reincidencia" required>
-            <option value="no">No</option>
-            <option value="si">Sí</option>
-        </select>
+    <label for="estado">Estado:</label>
+    <select name="estado" required>
+        <option value="">Seleccione un estado</option>
+        <?php foreach ($estados as $estado): ?>
+            <option value="<?php echo $estado['estado']; ?>"><?php echo $estado['estado']; ?></option>
+        <?php endforeach; ?>
+    </select>
 
-        <div id="incidencia_relacionada_container" style="display:none;">
-            <label for="incidencia_relacionada">Incidencia Relacionada</label>
-            <input type="text" id="incidencia_relacionada" name="incidencia_relacionada">
-        </div>
+    <button type="submit" onclick="abrirPopup()">Seleccionar Técnico</button>
 
-        <label for="estado">Estado</label>
-        <select id="estado" name="estado" required>
-            <option value="">Seleccione Estado</option>
-            <?php foreach ($estados as $estado): ?>
-                <option value="<?php echo $estado['estado']; ?>"><?php echo $estado['estado']; ?></option>
-            <?php endforeach; ?>
-        </select>
+</form>
 
-        <label for="tecnico">Técnico</label>
-        <select id="tecnico" name="tecnico" required>
-            <option value="">Seleccione Técnico</option>
-            <?php foreach ($tecnicos as $tec): ?>
-                <option value="<?php echo $tec['tecnico']; ?>"><?php echo $tec['tecnico']; ?></option>
-            <?php endforeach; ?>
-        </select>
+<script>
 
-        <input type="submit" value="Registrar Incidencia">
-    </form>
+        document.getElementById('reincidencia').addEventListener('change', function() {
+            var reincidenciaValue = this.value;
+            var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
+            
+            if (reincidenciaValue === 'si') {
+                incidenciaRelacionadaContainer.style.display = 'block'; // Mostrar campo
+            } 
+            else {
+                incidenciaRelacionadaContainer.style.display = 'none'; // Ocultar campo
+            }
+        });
 
-    <script>
+        function abrirPopup() {
+            // Abre una nueva ventana popup con el documento seleccionar_tecnico.php
+            window.open("seleccionar_tecnico.php", "popup", "width=600,height=400,scrollbars=yes,resizable=yes");
+        }
 
-document.getElementById('reincidencia').addEventListener('change', function() {
-    var reincidenciaValue = this.value;
-    var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
-    
-    if (reincidenciaValue === 'si') {
-        incidenciaRelacionadaContainer.style.display = 'block'; // Mostrar campo
-    } 
-    else {
-        incidenciaRelacionadaContainer.style.display = 'none'; // Ocultar campo
-    }
-});
-
-// Verificar el valor inicial al cargar la página
-window.onload = function() {
-    var reincidenciaValue = document.getElementById('reincidencia').value;
-    var incidenciaRelacionadaContainer = document.getElementById('incidencia_relacionada_container');
-    
-    if (reincidenciaValue === 'si') {
-        incidenciaRelacionadaContainer.style.display = 'block'; // Mostrar campo
-    } else {
-        incidenciaRelacionadaContainer.style.display = 'none'; // Ocultar campo
-    }
-};
-
-</script>
+    </script>
 
 </body>
 </html>
