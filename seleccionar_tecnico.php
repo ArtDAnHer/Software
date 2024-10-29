@@ -27,25 +27,21 @@ class Database {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function getTecnicosByPlaza($lugar) {
+        $sql = "SELECT * FROM insidencias.tec WHERE plaza = :plaza";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':plaza', $lugar);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function asignarTecnico($tecnico, $area, $incidencia_id) {
         $sql = "UPDATE incidencias SET tecnico = :tecnico, area = :area WHERE id = :id";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':tecnico', $tecnico);
         $stmt->bindParam(':area', $area);
-        $stmt->bindParam(':id', $incidencia_id, PDO::PARAM_INT);
+        $stmt->bindParam(':id', $incidencia_id);
         return $stmt->execute();
-    }
-
-    public function getTecnicos() {
-        $sql = "SELECT * FROM tecnico";
-        $stmt = $this->conn->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getAreas() {
-        $sql = "SELECT DISTINCT area FROM tecnico";
-        $stmt = $this->conn->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 
@@ -55,9 +51,11 @@ $db = new Database();
 // Obtener la última incidencia registrada
 $ultimaIncidencia = $db->getLastIncidencia();
 
-// Obtener técnicos y áreas para los selectores
-$tecnicos = $db->getTecnicos();
-$areas = $db->getAreas();
+// Obtener técnicos por plaza de la última incidencia
+$tecnicos = [];
+if ($ultimaIncidencia) {
+    $tecnicos = $db->getTecnicosByPlaza($ultimaIncidencia['lugar']);
+}
 
 // Procesar el formulario de asignación de técnico
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['incidencia_id'])) {
@@ -151,6 +149,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['incidencia_id'])) {
             <label>Quien Reporta:</label>
             <div class="field-value"><?php echo htmlspecialchars($ultimaIncidencia['quien_reporta']); ?></div>
 
+            <label>Estacionamiento:</label>
+            <div class="field-value"><?php echo htmlspecialchars($ultimaIncidencia['lugar']); ?></div>
+
+
             <label>Equipo:</label>
             <div class="field-value"><?php echo htmlspecialchars($ultimaIncidencia['equipo']); ?></div>
 
@@ -160,16 +162,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['incidencia_id'])) {
                 <label for="tecnico">Técnico:</label>
                 <select id="tecnico" name="tecnico" required>
                     <option value="">Seleccione Técnico</option>
-                    <?php foreach ($tecnicos as $tecnico): ?>
-                        <option value="<?php echo htmlspecialchars($tecnico['tecnico']); ?>"><?php echo htmlspecialchars($tecnico['tecnico']); ?></option>
+                    <?php foreach ($tecnicos as $tec): ?>
+                        <option value="<?php echo htmlspecialchars($tec['tecnico']); ?>"><?php echo htmlspecialchars($tec['tecnico']); ?></option>
                     <?php endforeach; ?>
                 </select>
 
                 <label for="area">Área:</label>
                 <select id="area" name="area" required>
                     <option value="">Seleccione Área</option>
-                    <?php foreach ($areas as $area): ?>
-                        <option value="<?php echo htmlspecialchars($area['area']); ?>"><?php echo htmlspecialchars($area['area']); ?></option>
+                    <?php foreach (array_unique(array_column($tecnicos, 'area')) as $area): ?>
+                        <option value="<?php echo htmlspecialchars($area); ?>"><?php echo htmlspecialchars($area); ?></option>
                     <?php endforeach; ?>
                 </select>
 

@@ -255,7 +255,7 @@ $estados = $db->getEstados();
 <script>
     <?php if ($exito): ?>
         // Abre el pop-up para seleccionar el técnico solo si la incidencia se registró correctamente
-        window.open("seleccionar_tecnico.php", "popup", "width=600,height=400,scrollbars=yes,resizable=yes");
+        window.open("seleccionar_tecnico.php", "popup", "width=600,height=600,scrollbars=yes,resizable=yes");
     <?php endif; ?>
 </script>
 
