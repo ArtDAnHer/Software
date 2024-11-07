@@ -7,6 +7,7 @@ class Database {
     private $password = "Coemsa.2024";
     private $conn;
 
+
     public function __construct() {
         try {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);

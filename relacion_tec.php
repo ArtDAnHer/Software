@@ -7,6 +7,7 @@ class Database {
     private $password = "Coemsa.2024";
     private $conn;
 
+
     public function __construct() {
         try {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
@@ -27,16 +28,13 @@ class Database {
     }
 
     public function getTecnicosRegistrados() {
-        $sql = "SELECT t.id, te.tecnico, e.nombre AS plaza 
-                FROM Tec t
-                JOIN tecnico te ON t.tecnico = te.id
-                JOIN estacionamiento e ON t.plaza = e.id"; // Traer los datos de la tabla Tec con relaciones
+        $sql = "SELECT `Tec`.`id`, `Tec`.`tecnico`, `Tec`.`plaza` FROM `reportes_fallas`.`Tec`"; // Traer los datos de la tabla Tec con relaciones
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getTecnicosList() {
-        $sql = "SELECT id, tecnico FROM tecnico"; // Obtener la lista de técnicos
+        $sql = "SELECT * FROM reportes_fallas.tecnico"; // Obtener la lista de técnicos
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -181,5 +179,31 @@ $lugares = $db->getLugares(); // Obtener los lugares (plazas)
 
         <button type="submit">Registrar Técnico</button>
     </form>
+
+    <h2>Técnicos Registrados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Técnico</th>
+                <th>Plaza</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($tecnicosRegistrados): ?>
+                <?php foreach ($tecnicosRegistrados as $tec): ?>
+                    <tr>
+                        <td><?php echo $tec['id']; ?></td>
+                        <td><?php echo $tec['tecnico']; ?></td> <!-- Mostrar nombre del técnico -->
+                        <td><?php echo $tec['plaza']; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="3">No hay técnicos registrados.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </body>
 </html>

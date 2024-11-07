@@ -17,7 +17,7 @@ class Database {
     }
 
     public function insertEquipo($data) {
-        $sql = "INSERT INTO equipos (tipo, lugar, estado, modelo, num_serie, equipo) VALUES (:tipo, :lugar, :estado, :modelo, :numserie, :equipo)";
+        $sql = "INSERT INTO equipos (tipo, lugar, estado, modelo, num_serie equipo) VALUES (:tipo, :lugar, :estado, :modelo, :num_serie, :equipo)";
         $stmt = $this->conn->prepare($sql);
 
         $stmt->bindParam(':tipo', $data['tipo']);
@@ -218,6 +218,8 @@ $lugares = $db->getLugares();
                 <th>Tipo</th>
                 <th>Lugar</th>
                 <th>Estado</th>
+                <th>Modelo</th>
+                <th>Numero de serie</th>
                 <th>Equipo</th>
             </tr>
         </thead>
@@ -229,6 +231,8 @@ $lugares = $db->getLugares();
                         <td><?php echo $equipo['tipo']; ?></td>
                         <td><?php echo $equipo['lugar']; ?></td>
                         <td><?php echo $equipo['estado']; ?></td>
+                        <td><?php echo $equipo['modelo']; ?></td>
+                        <td><?php echo $equipo['num_serie']; ?></td>
                         <td><?php echo $equipo['equipo']; ?></td>
                     </tr>
                 <?php endforeach; ?>
