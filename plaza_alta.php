@@ -7,6 +7,7 @@ class Database {
     private $password = "Coemsa.2024";
     private $conn;
 
+
     public function __construct() {
         try {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
@@ -37,12 +38,7 @@ $mensaje = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-
         'nombre' => $_POST['estacionamiento'],
-
-        'id' => $_POST['id'],
-        'estacionamiento' => $_POST['estacionamiento'],
-
         'direccion' => $_POST['direccion']
     ];
 
@@ -121,7 +117,6 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
             background-color: #218838;
         }
 
-
         table {
             width: 80%;
             margin: 20px auto;
@@ -141,22 +136,15 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
             background-color: #28a745;
             color: white;
         }
-
     </style>
 </head>
 <body>
     <h2>Alta de Plaza</h2>
     <hr>
-
     
     <?php if ($mensaje): ?>
         <div class="mensaje"><?php echo $mensaje; ?></div>
     <?php endif; ?>
-
-    <form method="POST" action="">
-        <label for="id">ID</label>
-        <input type="number" name="id" id="id" required><br>
-
 
     <form method="POST" action="">
         <label for="estacionamiento">Nombre del Estacionamiento</label>
@@ -167,7 +155,6 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
 
         <button type="submit">Registrar Plaza</button>
     </form>
-
 
     <!-- Sección para mostrar la tabla de plazas -->
     <h2>Plazas Registradas</h2>
@@ -194,7 +181,4 @@ $plazas = $db->getPlazas(); // Obtener las plazas registradas
         </tbody>
     </table>
 </body>
-
- </body>
-
 </html>

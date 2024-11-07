@@ -30,9 +30,7 @@ class Database {
     }
 
     public function getEquipos() {
-        // Modificación para traer los nombres de las tablas relacionadas en lugar de los IDs
-        $sql = "SELECT * FROM equipos e ";
-
+        $sql = "SELECT * FROM equipos";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -64,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'lugar' => $_POST['lugar'],
         'estado' => $_POST['estado'],
         'equipo' => $_POST['equipo'],
+        'ubicacion' => $_POST['ubicacion']
     ];
 
     $db = new Database();
@@ -75,10 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 $db = new Database();
-$equipos = $db->getEquipos(); // Obtener los equipos registrados
-$tipos = $db->getTipos(); // Obtener los tipos de equipo
-$estados = $db->getEstados(); // Obtener los estados
-$lugares = $db->getLugares(); // Obtener los lugares
+$equipos = $db->getEquipos();
+$tipos = $db->getTipos();
+$estados = $db->getEstados();
+$lugares = $db->getLugares();
 ?>
 
 <!DOCTYPE html>
@@ -224,9 +223,9 @@ $lugares = $db->getLugares(); // Obtener los lugares
                 <?php foreach ($equipos as $equipo): ?>
                     <tr>
                         <td><?php echo $equipo['id']; ?></td>
-                        <td><?php echo $equipo['tipo']; ?></td> <!-- Mostrar el nombre del tipo -->
-                        <td><?php echo $equipo['lugar']; ?></td> <!-- Mostrar el nombre del lugar -->
-                        <td><?php echo $equipo['estado']; ?></td> <!-- Mostrar el estado -->
+                        <td><?php echo $equipo['tipo']; ?></td>
+                        <td><?php echo $equipo['lugar']; ?></td>
+                        <td><?php echo $equipo['estado']; ?></td>
                         <td><?php echo $equipo['equipo']; ?></td>
                         <td><?php echo $equipo['ubicacion']; ?></td>
                     </tr>

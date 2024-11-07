@@ -12,6 +12,7 @@ class Database {
     private $password = "Coemsa.2024";
     private $conn;
 
+
     public function __construct() {
         try {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
@@ -28,7 +29,7 @@ class Database {
     }
 
     public function getTecnicosByPlaza($lugar) {
-        $sql = "SELECT * FROM insidencias.tec WHERE plaza = :plaza";
+        $sql = "SELECT * FROM reportes_fallas.Tec WHERE plaza = :plaza";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':plaza', $lugar);
         $stmt->execute();
@@ -37,14 +38,14 @@ class Database {
 
     // Nuevo método para obtener áreas
     public function getAreas() {
-        $sql = "SELECT area FROM insidencias.area";
+        $sql = "SELECT area FROM reportes_fallas.area";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     // Nuevo método para obtener equipos
     public function getEquiposByLugarYTipo($lugar, $tipo) {
-        $sql = "SELECT * FROM insidencias.equipos WHERE lugar = :lugar AND tipo = :tipo";
+        $sql = "SELECT * FROM reportes_fallas.equipos WHERE lugar = :lugar AND tipo = :tipo";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':lugar', $lugar);
         $stmt->bindParam(':tipo', $tipo);
@@ -52,12 +53,12 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function asignarTecnico($tecnico, $area, $incidencia_id) {
+    public function asignarTecnico($tecnico, $area, $incidencia_id, $equipo) {
         $sql = "UPDATE incidencias SET tecnico = :tecnico, area = :area, equipo = :equipo WHERE id = :id";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':tecnico', $tecnico);
         $stmt->bindParam(':area', $area);
-        $stmt->bindParam(':equipo', $equipo);
+        $stmt->bindParam(':equipo', $equipo); // Bind del equipo
         $stmt->bindParam(':id', $incidencia_id);
         return $stmt->execute();
     }
@@ -86,11 +87,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['incidencia_id'])) {
     $incidencia_id = $_POST['incidencia_id'];
     $tecnico = $_POST['tecnico'];
     $area = $_POST['area'];
+    $equipoSeleccionado = $_POST['equipo']; // Obtener el equipo seleccionado
 
-    if ($db->asignarTecnico($tecnico, $area, $incidencia_id)) {
-        echo "Técnico y área asignados exitosamente.";
+    if ($db->asignarTecnico($tecnico, $area, $incidencia_id, $equipoSeleccionado)) {
+        echo "Técnico, área y equipo asignados exitosamente.";
     } else {
-        echo "Error al asignar el técnico y el área.";
+        echo "Error al asignar el técnico, el área y el equipo.";
     }
 }
 ?>
@@ -176,20 +178,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['incidencia_id'])) {
             <label>Estacionamiento:</label>
             <div class="field-value"><?php echo htmlspecialchars($ultimaIncidencia['lugar']); ?></div>
 
-            <label>Equipo:</label>
-            <select id="area" name="area" required>
-                <option value="">Seleccione Área</option>
-                <?php foreach ($equipos as $equipo): // Cambiado para usar áreas obtenidas ?>
-                    <option value="<?php echo htmlspecialchars($equipo['equipo']); ?>"><?php echo htmlspecialchars($equipo['equipo']); ?></option>
-                <?php endforeach; ?>
-            </select>
-
             <form method="POST" action="">
                 <input type="hidden" name="incidencia_id" value="<?php echo htmlspecialchars($ultimaIncidencia['id']); ?>">
+
+                <label for="equipo">Equipo:</label>
+                <select id="equipo" name="equipo" required>
+                    <option value="">Seleccione Equipo</option>
+                    <?php foreach ($equipos as $equipo): ?>
+                        <option value="<?php echo htmlspecialchars($equipo['equipo']); ?>"><?php echo htmlspecialchars($equipo['equipo']); ?></option>
+                    <?php endforeach; ?>
+                </select>
 
                 <label for="tecnico">Técnico:</label>
                 <select id="tecnico" name="tecnico" required>
                     <option value="">Seleccione Técnico</option>
+                    <option value="otros">Otros</option>
                     <?php foreach ($tecnicos as $tec): ?>
                         <option value="<?php echo htmlspecialchars($tec['tecnico']); ?>"><?php echo htmlspecialchars($tec['tecnico']); ?></option>
                     <?php endforeach; ?>
@@ -198,13 +201,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['incidencia_id'])) {
                 <label for="area">Área:</label>
                 <select id="area" name="area" required>
                     <option value="">Seleccione Área</option>
-                    <?php foreach ($areas as $area): // Cambiado para usar áreas obtenidas ?>
+                    <?php foreach ($areas as $area): ?>
                         <option value="<?php echo htmlspecialchars($area); ?>"><?php echo htmlspecialchars($area); ?></option>
                     <?php endforeach; ?>
                 </select>
 
                 <div class="button-container">
-                    <button type="submit">Asignar Técnico y Área</button>
+                    <button type="submit">Asignar Técnico, Área y Equipo</button>
                 </div>
             </form>
         <?php else: ?>

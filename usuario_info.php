@@ -1,11 +1,12 @@
 <?php
 class Database {
-    private $db = "insidencias"; 
+    private $db = "insidencias";
     private $ip = "192.168.1.17";
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";
     private $conn;
+
 
     public function __construct() {
         try {
@@ -16,15 +17,62 @@ class Database {
         }
     }
 
-    public function getIncidencias() {
-        $sql = "SELECT * FROM incidencias"; // Consulta para obtener todos los datos de la tabla incidencias
-        $stmt = $this->conn->query($sql);
+    public function getIncidencias($tecnico = null, $lugar = null, $estado = null, $fechaInicio = null, $fechaFin = null, $area = null) {
+        $sql = "SELECT * FROM incidencias WHERE 1=1";
+        $params = [];
+
+        if ($tecnico) {
+            $sql .= " AND tecnico = :tecnico";
+            $params[':tecnico'] = $tecnico;
+        }
+
+        if ($lugar) {
+            $sql .= " AND lugar = :lugar";
+            $params[':lugar'] = $lugar;
+        }
+
+        if ($estado) {
+            $sql .= " AND estado = :estado";
+            $params[':estado'] = $estado;
+        }
+
+        if ($fechaInicio && $fechaFin) {
+            $sql .= " AND fecha_reporte BETWEEN :fechaInicio AND :fechaFin";
+            $params[':fechaInicio'] = $fechaInicio;
+            $params[':fechaFin'] = $fechaFin;
+        }
+
+        if ($area) {
+            $sql .= " AND area = :area";
+            $params[':area'] = $area;
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getUniqueValues($column) {
+        $sql = "SELECT DISTINCT $column FROM incidencias";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 }
 
 $db = new Database();
-$incidencias = $db->getIncidencias();
+$tecnicos = $db->getUniqueValues('tecnico');
+$lugares = $db->getUniqueValues('lugar');
+$estados = $db->getUniqueValues('estado');
+$areas = $db->getUniqueValues('area');
+
+$incidencias = $db->getIncidencias(
+    $_GET['tecnico'] ?? null,
+    $_GET['lugar'] ?? null,
+    $_GET['estado'] ?? null,
+    $_GET['fecha_inicio'] ?? null,
+    $_GET['fecha_fin'] ?? null,
+    $_GET['area'] ?? null
+);
 ?>
 
 <!DOCTYPE html>
@@ -33,7 +81,9 @@ $incidencias = $db->getIncidencias();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Incidencias</title>
-    <style>
+</head>
+
+<style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -46,8 +96,65 @@ $incidencias = $db->getIncidencias();
             margin-top: 20px;
         }
 
+        .mensaje {
+            text-align: center;
+            color: green;
+            margin: 10px 0;
+        }
+
+        form {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        form label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        form input[type="text"],
+        form textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        form textarea {
+            height: 100px;
+        }
+
+        form button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        form button:hover {
+            background-color: #218838;
+        }
+
+        form select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
         table {
-            width: 100%;
+            width: 80%;
             margin: 20px auto;
             border-collapse: collapse;
             background-color: #fff;
@@ -59,38 +166,62 @@ $incidencias = $db->getIncidencias();
             padding: 10px;
             border: 1px solid #ddd;
             text-align: center;
-            font-size: 12px;
         }
 
         table th {
             background-color: #28a745;
             color: white;
         }
-
-        button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #218838;
-        }
     </style>
-    <script>
-        function abrirPopup(id) {
-            var url = 'cierre.php?id=' + id;
-            var popup = window.open(url, 'cierre', 'width=600,height=600');
-        }
-    </script>
-</head>
+
 <body>
+    <h2>Filtrar Incidencias</h2>
+    <form method="GET">
+        <label for="tecnico">Técnico:</label>
+        <select name="tecnico">
+            <option value="">Todos</option>
+            <?php foreach ($tecnicos as $tecnico): ?>
+                <option value="<?php echo $tecnico; ?>"><?php echo $tecnico; ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="lugar">Lugar:</label>
+        <select name="lugar">
+            <option value="">Todos</option>
+            <?php foreach ($lugares as $lugar): ?>
+                <option value="<?php echo $lugar; ?>"><?php echo $lugar; ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="estado">Estado:</label>
+        <select name="estado">
+            <option value="">Todos</option>
+            <?php foreach ($estados as $estado): ?>
+                <option value="<?php echo $estado; ?>"><?php echo $estado; ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="area">Área:</label>
+        <select name="area">
+            <option value="">Todas</option>
+            <?php foreach ($areas as $area): ?>
+                <option value="<?php echo $area; ?>"><?php echo $area; ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="fecha_inicio">Fecha Inicio:</label>
+        <input type="date" name="fecha_inicio">
+        <br>
+        <br>
+        <label for="fecha_fin">Fecha Fin:</label>
+        <input type="date" name="fecha_fin">
+        <br>
+        <br>
+        <button type="submit">Buscar</button>
+    </form>
+
     <h2>Lista de Incidencias</h2>
-    <table>
+        <table>
         <thead>
             <tr>
                 <th>ID</th>

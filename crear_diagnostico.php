@@ -1,6 +1,6 @@
 <?php
 class Database {
-    private $db = "insidencias"; 
+    private $db = "insidencias";
     private $ip = "192.168.1.17";
     private $port = "3306";
     private $username = "celular";

@@ -2,8 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <!-- Agregar Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -33,13 +36,30 @@
         }
         input[type="text"],
         input[type="password"] {
-            width: 90%;
+            width: 85%;
             padding: 10px;
             margin-bottom: 20px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        button {
+        .password-container {
+            display: flex;
+            align-items: center;
+            width: 90%;
+            margin: 0 auto;
+        }
+        .password-container input {
+            flex: 1;
+        }
+        .password-container button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0 5px;
+            color: #666;
+            font-size: 18px;
+        }
+        button[type="submit"] {
             background: #007bff;
             color: #fff;
             border: none;
@@ -48,7 +68,7 @@
             cursor: pointer;
             font-size: 16px;
         }
-        button:hover {
+        button[type="submit"]:hover {
             background: #0056b3;
         }
     </style>
@@ -57,17 +77,37 @@
     <div class="container">
         <h2>Login</h2>
         <form method="post" action="login_process.php">
-            <img src="imagenes\logo .jpg" />
+            <img src="imagenes/logo .jpg" alt="Logo" />
             <br>
             <label for="username">Usuario:</label>
             <input type="text" id="username" name="username" required><br>
             <br>
-            <label for="password">Contraseña:</label>
-            <input type="password" id="password" name="password" required><br>
+            <label for="password">Contrase&ntilde;a:</label>
+            <div class="password-container">
+                <input type="password" id="password" name="password" required>
+                <button type="button" onclick="togglePassword()">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
             <br>
-            <button type="submit">Iniciar sesión</button>
+            <button type="submit">Iniciar sesi&oacute;n</button>
         </form>
     </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById("password");
+            const icon = passwordInput.nextElementSibling.querySelector("i");
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
+    </script>
 </body>
 </html>
-

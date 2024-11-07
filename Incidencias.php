@@ -9,6 +9,9 @@ if (!isset($_SESSION['username'])) {
 // Define el archivo a incluir basado en el parámetro 'page'
 if (isset($_GET['page'])) {
     switch ($_GET['page']) {
+        case 'alta_previa':
+            $fileToInclude = 'crear_incidencia_pasada.php';
+            break;
         case 'alta':
             $fileToInclude = 'incidencias_alta.php';
             break;
@@ -56,6 +59,7 @@ $username = $_SESSION['username'];
             <br>
             <h4>Estacionamientos</h4>
             <div>
+                °<a href="?page=alta_previa">Alta incidencia previa</a><br>
                 °<a href="?page=alta">Alta</a><br>
                 °<a href="?page=diagnostico">Diagnistico</a><br>
                 °<a href="?page=finalizacion">Finalizacion</a><br>

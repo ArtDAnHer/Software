@@ -10,12 +10,13 @@ $exito = false; // Variable para verificar el éxito de la inserción
 
 // Clase para la conexión a la base de datos
 class Database {
-    private $db = "insidencias"; // Nombre de la base de datos
+    private $db = "insidencias";
     private $ip = "192.168.1.17";
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";
     private $conn;
+
 
     public function __construct() {
         try {
@@ -189,6 +190,10 @@ $estados = $db->getEstados();
         input[type="submit"]:hover {
             background-color: #218838;
         }
+        /* Ocultar campo inicialmente */
+        #incidencia_relacionada_group {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -233,13 +238,15 @@ $estados = $db->getEstados();
     <input type="file" name="imagen" accept="image/*">
 
     <label>¿Reincidencia?</label>
-    <select name="reincidencia">
-        <option value="si">Sí</option>
+    <select name="reincidencia" id="reincidencia" onchange="toggleIncidenciaRelacionada()">
         <option value="no">No</option>
+        <option value="si">Sí</option>
     </select>
 
-    <label for="incidencia_relacionada">Incidencia Relacionada:</label>
-    <input type="text" name="incidencia_relacionada">
+    <div id="incidencia_relacionada_group">
+        <label for="incidencia_relacionada">Incidencia Relacionada:</label>
+        <input type="text" name="incidencia_relacionada" id="incidencia_relacionada">
+    </div>
 
     <label for="estado">Estado:</label>
     <select name="estado" required>
@@ -253,10 +260,17 @@ $estados = $db->getEstados();
 </form>
 
 <script>
+    function toggleIncidenciaRelacionada() {
+        const reincidencia = document.getElementById('reincidencia').value;
+        const incidenciaRelacionadaGroup = document.getElementById('incidencia_relacionada_group');
+        incidenciaRelacionadaGroup.style.display = (reincidencia === 'si') ? 'block' : 'none';
+    }
+<!--
     <?php if ($exito): ?>
         // Abre el pop-up para seleccionar el técnico solo si la incidencia se registró correctamente
         window.open("seleccionar_tecnico.php", "popup", "width=600,height=600,scrollbars=yes,resizable=yes");
     <?php endif; ?>
+-->
 </script>
 
 </body>
