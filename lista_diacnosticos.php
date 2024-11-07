@@ -111,10 +111,12 @@ $incidencias = $db->getIncidencias();
                 <th>Diagnóstico</th>
                 <th>Requiere Piezas</th>
                 <th>Detalle Piezas Requeridas</th>
+                <th>Requerimiento</th>
                 <th>Refacción Adicional 1</th>
+                <th>Requerimiento1</th>
                 <th>Refacción Adicional 2</th>
+                <th>Requerimiento2</th>
                 <th>Foto Evidencia Atención</th>
-                <th>Fecha Atención</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -138,10 +140,12 @@ $incidencias = $db->getIncidencias();
                 <td><?php echo $incidencia['diagnostico']; ?></td>
                 <td><?php echo $incidencia['requiere_piezas'] ? 'Sí' : 'No'; ?></td>
                 <td><?php echo $incidencia['detalle_piezas_requeridas']; ?></td>
+                <td><?php echo $incidencia['requerimiento']; ?></td>
                 <td><?php echo $incidencia['refaccion_adicional_1']; ?></td>
+                <td><?php echo $incidencia['requerimiento1']; ?></td>
                 <td><?php echo $incidencia['refaccion_adicional_2']; ?></td>
+                <td><?php echo $incidencia['requerimiento2']; ?></td>
                 <td><?php echo $incidencia['foto_evidencia_atencion']; ?></td>
-                <td><?php echo $incidencia['fecha_atencion']; ?></td>
                 <td><button onclick="abrirPopup(<?php echo $incidencia['id']; ?>)">Editar</button></td>
             </tr>
         <?php endforeach; ?>

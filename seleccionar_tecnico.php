@@ -12,7 +12,6 @@ class Database {
     private $password = "Coemsa.2024";
     private $conn;
 
-
     public function __construct() {
         try {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
@@ -29,7 +28,7 @@ class Database {
     }
 
     public function getTecnicosByPlaza($lugar) {
-        $sql = "SELECT * FROM reportes_fallas.Tec WHERE plaza = :plaza";
+        $sql = "SELECT * FROM Tec WHERE plaza = :plaza";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':plaza', $lugar);
         $stmt->execute();
@@ -38,14 +37,14 @@ class Database {
 
     // Nuevo método para obtener áreas
     public function getAreas() {
-        $sql = "SELECT area FROM reportes_fallas.area";
+        $sql = "SELECT area FROM area";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     // Nuevo método para obtener equipos
     public function getEquiposByLugarYTipo($lugar, $tipo) {
-        $sql = "SELECT * FROM reportes_fallas.equipos WHERE lugar = :lugar AND tipo = :tipo";
+        $sql = "SELECT * FROM equipos WHERE lugar = :lugar AND tipo = :tipo";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':lugar', $lugar);
         $stmt->bindParam(':tipo', $tipo);

@@ -12,12 +12,12 @@ class Database {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            echo "Error de conexi��n: " . $e->getMessage();
+            echo "Error de conexión: " . $e->getMessage();
         }
     }
 
     public function insertEquipo($data) {
-        $sql = "INSERT INTO equipos (tipo, lugar, estado, modelo, num_serie equipo) VALUES (:tipo, :lugar, :estado, :modelo, :num_serie, :equipo)";
+        $sql = "INSERT INTO equipos (tipo, lugar, estado, modelo, num_serie, equipo) VALUES (:tipo, :lugar, :estado, :modelo, :num_serie, :equipo)";
         $stmt = $this->conn->prepare($sql);
 
         $stmt->bindParam(':tipo', $data['tipo']);
@@ -26,7 +26,6 @@ class Database {
         $stmt->bindParam(':modelo', $data['modelo']);
         $stmt->bindParam(':num_serie', $data['num_serie']);
         $stmt->bindParam(':equipo', $data['equipo']);
-
 
         return $stmt->execute();
     }
@@ -63,6 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'tipo' => $_POST['tipo'],
         'lugar' => $_POST['lugar'],
         'estado' => $_POST['estado'],
+        'modelo' => $_POST['modelo'],       // Agregado modelo
+        'num_serie' => $_POST['num_serie'], // Agregado num_serie
         'equipo' => $_POST['equipo']
     ];
 
@@ -94,18 +95,15 @@ $lugares = $db->getLugares();
             margin: 0;
             padding: 0;
         }
-
         h2 {
             text-align: center;
             margin-top: 20px;
         }
-
         .mensaje {
             text-align: center;
             color: green;
             margin: 10px 0;
         }
-
         form {
             background-color: #fff;
             border-radius: 8px;
@@ -114,13 +112,11 @@ $lugares = $db->getLugares();
             margin: 20px auto;
             padding: 20px;
         }
-
         form label {
             font-weight: bold;
             margin-bottom: 5px;
             display: block;
         }
-
         form input[type="text"], form select {
             width: calc(100% - 22px);
             padding: 10px;
@@ -128,7 +124,6 @@ $lugares = $db->getLugares();
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-
         form button {
             background-color: #28a745;
             color: white;
@@ -139,11 +134,9 @@ $lugares = $db->getLugares();
             cursor: pointer;
             transition: background-color 0.3s;
         }
-
         form button:hover {
             background-color: #218838;
         }
-
         table {
             width: 80%;
             margin: 20px auto;
@@ -152,13 +145,11 @@ $lugares = $db->getLugares();
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
         table th, table td {
             padding: 10px;
             border: 1px solid #ddd;
             text-align: center;
         }
-
         table th {
             background-color: #28a745;
             color: white;
@@ -238,7 +229,7 @@ $lugares = $db->getLugares();
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="6">No hay equipos registrados.</td>
+                    <td colspan="7">No hay equipos registrados.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

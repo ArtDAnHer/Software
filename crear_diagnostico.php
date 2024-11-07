@@ -19,106 +19,88 @@ class Database {
     public function getIncidenciaById($id) {
         $sql = "SELECT * FROM incidencias WHERE id = :id";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function updateIncidencia($data) {
-        $sql = "UPDATE incidencias SET 
-                    diagnostico = :diagnostico, 
-                    requiere_piezas = :requiere_piezas, 
-                    detalle_piezas_requeridas = :detalle_piezas_requeridas, 
-                    refaccion_adicional_1 = :refaccion_adicional_1, 
-                    refaccion_adicional_2 = :refaccion_adicional_2, 
-                    foto_evidencia_atencion = :foto_evidencia_atencion, 
-                    fecha_atencion = :fecha_atencion 
-                WHERE id = :id";
-
+    public function getTiposRefacciones() {
+        $sql = "SELECT id, nombre FROM tipos_refacciones";
         $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-        // Bind parameters
+    public function updateIncidencia($data) {
+        $sql = "UPDATE incidencias SET diagnostico = :diagnostico, requiere_piezas = :requiere_piezas,
+                detalle_piezas_requeridas = :detalle_piezas_requeridas,
+                requerimiento = :requerimiento, refaccion_adicional_1 = :refaccion_adicional_1, 
+                requerimiento1 = :requerimiento1, refaccion_adicional_2 = :refaccion_adicional_2, 
+                requerimiento2 = :requerimiento2, foto_evidencia_atencion = :foto_evidencia_atencion
+                WHERE id = :id";
+    
+        $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':diagnostico', $data['diagnostico']);
         $stmt->bindParam(':requiere_piezas', $data['requiere_piezas']);
         $stmt->bindParam(':detalle_piezas_requeridas', $data['detalle_piezas_requeridas']);
+        $stmt->bindParam(':requerimiento', $data['requerimiento']);
         $stmt->bindParam(':refaccion_adicional_1', $data['refaccion_adicional_1']);
+        $stmt->bindParam(':requerimiento1', $data['requerimiento1']);
         $stmt->bindParam(':refaccion_adicional_2', $data['refaccion_adicional_2']);
+        $stmt->bindParam(':requerimiento2', $data['requerimiento2']);
         $stmt->bindParam(':foto_evidencia_atencion', $data['foto_evidencia_atencion']);
-        
-        // Cambiar fecha_atencion para que sea la fecha actual
-        $fecha_actual = date('Y-m-d H:i:s');
-        $stmt->bindParam(':fecha_atencion', $fecha_actual);
-        
-        $stmt->bindParam(':id', $data['id']);
-
+        $stmt->bindParam(':id', $data['id'], PDO::PARAM_INT);
+    
         return $stmt->execute();
     }
 }
 
-// Verificar si el formulario ha sido enviado
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $db = new Database();
+// Fetch options and incidencia data
+$db = new Database();
+$tiposRefacciones = $db->getTiposRefacciones();
+$incidencia = isset($_GET['id']) ? $db->getIncidenciaById($_GET['id']) : null;
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Get existing photo_evidencia_atencion if not changed
+    $fotoEvidencia = $incidencia['foto_evidencia_atencion']; 
+
+    // Handle file upload with image validation
+    if (isset($_FILES['foto_evidencia_atencion']) && $_FILES['foto_evidencia_atencion']['error'] == 0) {
+        $fileType = $_FILES["foto_evidencia_atencion"]["type"];
+        if (in_array($fileType, ['image/jpeg', 'image/png', 'image/gif'])) {
+            $targetDirectory = "uploads/";
+            $targetFile = $targetDirectory . basename($_FILES["foto_evidencia_atencion"]["name"]);
+            if (move_uploaded_file($_FILES["foto_evidencia_atencion"]["tmp_name"], $targetFile)) {
+                $fotoEvidencia = $targetFile;  // Update photo if new image is uploaded
+            } else {
+                echo "Error al subir la imagen.";
+            }
+        } else {
+            echo "Solo se permiten archivos de imagen (JPEG, PNG, GIF).";
+        }
+    }
+
     $data = [
-        'id' => $_POST['id'] ?? null,
-        'diagnostico' => $_POST['diagnostico'] ?? '',
-        'requiere_piezas' => $_POST['requiere_piezas'] ?? '',
-        'detalle_piezas_requeridas' => $_POST['detalle_piezas_requeridas'] ?? '',
-        'refaccion_adicional_1' => $_POST['refaccion_adicional_1'] ?? '',
-        'refaccion_adicional_2' => $_POST['refaccion_adicional_2'] ?? '',
-        'foto_evidencia_atencion' => '', // Se llenará después de la subida
+        'id' => $_POST['id'],
+        'diagnostico' => $_POST['diagnostico'],
+        'requiere_piezas' => $_POST['requiere_piezas'],
+        'detalle_piezas_requeridas' => $_POST['detalle_piezas_requeridas'],
+        'requerimiento' => $_POST['requerimiento'],
+        'refaccion_adicional_1' => $_POST['refaccion_adicional_1'],
+        'requerimiento1' => $_POST['requerimiento1'],
+        'refaccion_adicional_2' => $_POST['refaccion_adicional_2'],
+        'requerimiento2' => $_POST['requerimiento2'],
+        'foto_evidencia_atencion' => $fotoEvidencia // Use the existing or new image
     ];
 
-    // Validar campos requeridos
-    $required_fields = ['diagnostico']; // Solo el diagnóstico es obligatorio
-
-    foreach ($required_fields as $field) {
-        if (empty($data[$field])) {
-            echo "El campo $field es obligatorio.";
-            exit; // Detener la ejecución si un campo requerido está vacío
-        }
-    }
-
-    // Manejar la subida del archivo
-    if (isset($_FILES['foto_evidencia_atencion']) && $_FILES['foto_evidencia_atencion']['error'] === UPLOAD_ERR_OK) {
-        $file_tmp_path = $_FILES['foto_evidencia_atencion']['tmp_name'];
-        $file_name = $_FILES['foto_evidencia_atencion']['name'];
-        $file_size = $_FILES['foto_evidencia_atencion']['size'];
-        $file_type = $_FILES['foto_evidencia_atencion']['type'];
-        $file_name_cmp = explode('.', $file_name);
-        $file_extension = end($file_name_cmp);
-
-        // Directorio donde se guardarán las imágenes
-        $uploadFileDir = './uploads/';
-        $dest_path = $uploadFileDir . $file_name;
-
-        // Verificar el tamaño máximo permitido (opcional)
-        $maxFileSize = 2 * 1024 * 1024; // 2MB
-        if ($file_size > $maxFileSize) {
-            echo "El archivo es demasiado grande. Debe ser menor a 2MB.";
-            exit;
-        }
-
-        // Mover el archivo al directorio de destino
-        if(move_uploaded_file($file_tmp_path, $dest_path)) {
-            $data['foto_evidencia_atencion'] = $dest_path; // Guardar la ruta del archivo
-        } else {
-            echo "Error al mover el archivo subido.";
-            exit;
-        }
-    } else {
-        // En caso de que no se suba archivo, usar el valor anterior
-        $data['foto_evidencia_atencion'] = $_POST['foto_evidencia_atencion'] ?? '';
-    }
-
-    // Actualizar la incidencia en la base de datos
     if ($db->updateIncidencia($data)) {
-        echo "Incidencia actualizada correctamente";
+        echo "<script type='text/javascript'>
+                window.opener.location.reload(); // Reload parent window
+                window.close(); // Close the current window
+              </script>";
     } else {
-        echo "Error al actualizar la incidencia";
+        echo "Error al actualizar la incidencia.";
     }
-} else if (isset($_GET['id'])) {
-    $db = new Database();
-    $incidencia = $db->getIncidenciaById($_GET['id']);
 }
 
 ?>
@@ -129,30 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Incidencia</title>
-    <script>
-        function togglePiezasFields() {
-            var requierePiezas = document.querySelector('select[name="requiere_piezas"]').value;
-            var piezasFields = document.getElementById('piezas-fields');
-            var refaccion1Field = document.getElementById('refaccion1-fields');
-            var refaccion2Field = document.getElementById('refaccion2-fields');
-
-            if (requierePiezas === '1') {
-                piezasFields.style.display = 'table-row';
-                refaccion1Field.style.display = 'table-row'; // Mostrar campos de refacción
-                refaccion2Field.style.display = 'table-row'; // Mostrar campos de refacción
-            } else {
-                piezasFields.style.display = 'none';
-                refaccion1Field.style.display = 'none'; // Ocultar campos de refacción
-                refaccion2Field.style.display = 'none'; // Ocultar campos de refacción
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            togglePiezasFields(); // Para mostrar/ocultar al cargar la página
-            var requierePiezasSelect = document.querySelector('select[name="requiere_piezas"]');
-            requierePiezasSelect.addEventListener('change', togglePiezasFields);
-        });
-    </script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -160,93 +118,128 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin: 0;
             padding: 0;
         }
-
         h2 {
             text-align: center;
             margin-top: 20px;
         }
-
-        table {
-            width: 100%;
-            margin: 20px auto;
-            border-collapse: collapse;
+        form {
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 70%;
+            margin: auto;
         }
-
-        table th, table td {
+        table {
+            width: 100%;
+        }
+        th, td {
             padding: 10px;
+            text-align: left;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
             border: 1px solid #ddd;
-            text-align: center;
-            font-size: 12px;
         }
-
-        table th {
-            background-color: #28a745;
-            color: white;
-        }
-
         button {
-            background-color: #28a745;
+            background-color: #4CAF50;
             color: white;
+            padding: 10px 20px;
             border: none;
-            padding: 5px 10px;
             border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s;
         }
-
         button:hover {
-            background-color: #218838;
+            background-color: #45a049;
+        }
+        .thumbnail {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: cover;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <h2>Crear diagnostico</h2>
+    <h2>Editar Incidencia</h2>
     <form method="POST" action="" enctype="multipart/form-data">
-        <input type="hidden" name="id" value="<?php echo $incidencia['id']; ?>">
-        <table>
-            <tr>
-                <th>Diagnóstico</th>
-                <td><input type="text" name="diagnostico" value="<?php echo $incidencia['diagnostico']; ?>" required></td>
-            </tr>
-            <tr>
-                <th>Requiere Piezas</th>
-                <td>
-                    <select name="requiere_piezas" onchange="togglePiezasFields()" required>
-                        <option value="0" <?php echo $incidencia['requiere_piezas'] == 'No' ? 'selected' : ''; ?>>No</option>
-                        <option value="1" <?php echo $incidencia['requiere_piezas'] == 'Si' ? 'selected' : ''; ?>>Sí</option>
-                    </select>
-                </td>
-            </tr>
-            <tr id="piezas-fields" style="display: <?php echo $incidencia['requiere_piezas'] == 1 ? 'table-row' : 'none'; ?>">
-                <th>Detalle Piezas Requeridas</th>
-                <td><input type="text" name="detalle_piezas_requeridas" value="<?php echo $incidencia['detalle_piezas_requeridas']; ?>"></td>
-            </tr>
-            <tr id="refaccion1-fields" style="display: <?php echo $incidencia['requiere_piezas'] == 1 ? 'table-row' : 'none'; ?>">
-                <th>Refacción Adicional 1</th>
-                <td><input type="text" name="refaccion_adicional_1" value="<?php echo $incidencia['refaccion_adicional_1']; ?>"></td>
-            </tr>
-            <tr id="refaccion2-fields" style="display: <?php echo $incidencia['requiere_piezas'] == 1 ? 'table-row' : 'none'; ?>">
-                <th>Refacción Adicional 2</th>
-                <td><input type="text" name="refaccion_adicional_2" value="<?php echo $incidencia['refaccion_adicional_2']; ?>"></td>
-            </tr>
-            <tr>
-                <th>Foto Evidencia Atención</th>
-                <td>
-                    <input type="file" name="foto_evidencia_atencion" accept="image/*">
-                    <?php if (!empty($incidencia['foto_evidencia_atencion'])): ?>
-                        <p><img src="<?php echo $incidencia['foto_evidencia_atencion']; ?>" alt="Evidencia" style="max-width: 100px; max-height: 100px;"></p>
-                    <?php endif; ?>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <button type="submit">Actualizar Incidencia</button>
-                </td>
-            </tr>
-        </table>
+    <input type="hidden" name="id" value="<?php echo $incidencia['id']; ?>">
+    <table>
+        <tr>
+            <th>Diagnóstico</th>
+            <td><input type="text" name="diagnostico" value="<?php echo htmlspecialchars($incidencia['diagnostico']); ?>" required></td>
+        </tr>
+        <tr>
+            <th>Requiere Piezas</th>
+            <td>
+                <select name="requiere_piezas">
+                    <option value="0" <?php echo $incidencia['requiere_piezas'] == '0' ? 'selected' : ''; ?>>No</option>
+                    <option value="1" <?php echo $incidencia['requiere_piezas'] == '1' ? 'selected' : ''; ?>>Sí</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <th>Detalle de Piezas Requeridas</th>
+            <td><input type="text" name="detalle_piezas_requeridas" value="<?php echo htmlspecialchars($incidencia['detalle_piezas_requeridas']); ?>"></td>
+        </tr>
+        <tr>
+            <th>Requerimiento</th>
+            <td>
+                <select name="requerimiento">
+                    <?php foreach ($tiposRefacciones as $refaccion): ?>
+                        <option value="<?php echo $refaccion['nombre']; ?>" <?php echo $incidencia['requerimiento'] == $refaccion['nombre'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($refaccion['nombre']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <th>Refacción Adicional 1</th>
+            <td><input type="text" name="refaccion_adicional_1" value="<?php echo htmlspecialchars($incidencia['refaccion_adicional_1']); ?>"></td>
+        </tr>
+        <tr>
+            <th>Requerimiento 1</th>
+            <td>
+                <select name="requerimiento1">
+                    <?php foreach ($tiposRefacciones as $refaccion): ?>
+                        <option value="<?php echo $refaccion['nombre']; ?>" <?php echo $incidencia['requerimiento1'] == $refaccion['nombre'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($refaccion['nombre']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <th>Refacción Adicional 2</th>
+            <td><input type="text" name="refaccion_adicional_2" value="<?php echo htmlspecialchars($incidencia['refaccion_adicional_2']); ?>"></td>
+        </tr>
+        <tr>
+            <th>Requerimiento 2</th>
+            <td>
+                <select name="requerimiento2">
+                    <?php foreach ($tiposRefacciones as $refaccion): ?>
+                        <option value="<?php echo $refaccion['nombre']; ?>" <?php echo $incidencia['requerimiento2'] == $refaccion['nombre'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($refaccion['nombre']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <th>Foto de Evidencia</th>
+            <td>
+                <?php if ($incidencia['foto_evidencia_atencion']): ?>
+                    <img src="<?php echo $incidencia['foto_evidencia_atencion']; ?>" class="thumbnail" alt="Miniatura de la imagen">
+                <?php endif; ?>
+                <input type="file" name="foto_evidencia_atencion" accept="image/*">
+            </td>
+        </tr>
+    </table>
+    <button type="submit">Actualizar Incidencia</button>
     </form>
 </body>
 </html>
