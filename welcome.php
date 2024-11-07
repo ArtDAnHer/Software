@@ -36,6 +36,9 @@ if (isset($_GET['page'])) {
         case 'relacion_tec':
             $fileToInclude = 'relacion_tec.php';
             break;
+        case 'refacciones':
+            $fileToInclude = 'refacciones_alta.php';
+            break;
         default:
             $fileToInclude = 'usuario_info.php';
             break;
@@ -80,6 +83,7 @@ if (isset($_GET['page'])) {
                 °<a href="?page=alta_falla">Falla</a><br>
                 °<a href="?page=alta_estado">Estado</a><br>
                 °<a href="?page=relacion_tec">Plaza por tecnico</a><br>
+                °<a href="?page=refacciones">Refacciones</a><br>
             </div>
         </div>
 

@@ -12,19 +12,21 @@ class Database {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            echo "Error de conexión: " . $e->getMessage();
+            echo "Error de conexi��n: " . $e->getMessage();
         }
     }
 
     public function insertEquipo($data) {
-        $sql = "INSERT INTO equipos (tipo, lugar, estado, equipo, ubicacion) VALUES (:tipo, :lugar, :estado, :equipo, :ubicacion)";
+        $sql = "INSERT INTO equipos (tipo, lugar, estado, modelo, num_serie, equipo) VALUES (:tipo, :lugar, :estado, :modelo, :numserie, :equipo)";
         $stmt = $this->conn->prepare($sql);
 
         $stmt->bindParam(':tipo', $data['tipo']);
         $stmt->bindParam(':lugar', $data['lugar']);
         $stmt->bindParam(':estado', $data['estado']);
+        $stmt->bindParam(':modelo', $data['modelo']);
+        $stmt->bindParam(':num_serie', $data['num_serie']);
         $stmt->bindParam(':equipo', $data['equipo']);
-        $stmt->bindParam(':ubicacion', $data['ubicacion']);
+
 
         return $stmt->execute();
     }
@@ -61,8 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'tipo' => $_POST['tipo'],
         'lugar' => $_POST['lugar'],
         'estado' => $_POST['estado'],
-        'equipo' => $_POST['equipo'],
-        'ubicacion' => $_POST['ubicacion']
+        'equipo' => $_POST['equipo']
     ];
 
     $db = new Database();
@@ -197,8 +198,11 @@ $lugares = $db->getLugares();
             <?php endforeach; ?>
         </select>
 
-        <label for="ubicacion">Ubicacion</label>
-        <input type="text" name="ubicacion" id="ubicacion" required>
+        <label for="modelo">Modelo</label>
+        <input type="text" name="modelo" id="modelo" required>
+
+        <label for="num_serie">Numero de serie</label>
+        <input type="text" name="num_serie" id="num_serie" required>
 
         <label for="equipo">Nombre del Equipo</label>
         <input type="text" name="equipo" id="equipo" required>
@@ -215,7 +219,6 @@ $lugares = $db->getLugares();
                 <th>Lugar</th>
                 <th>Estado</th>
                 <th>Equipo</th>
-                <th>Ubicacion</th>
             </tr>
         </thead>
         <tbody>
@@ -227,7 +230,6 @@ $lugares = $db->getLugares();
                         <td><?php echo $equipo['lugar']; ?></td>
                         <td><?php echo $equipo['estado']; ?></td>
                         <td><?php echo $equipo['equipo']; ?></td>
-                        <td><?php echo $equipo['ubicacion']; ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
