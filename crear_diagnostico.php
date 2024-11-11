@@ -102,7 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo "Error al actualizar la incidencia.";
     }
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -162,6 +161,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin-top: 10px;
         }
     </style>
+    <script>
+        function toggleFields() {
+            var requierePiezas = document.getElementsByName("requiere_piezas")[0].value;
+            var fieldsToHide = document.getElementsByClassName("hidden-fields");
+            if (requierePiezas == "0") {
+                for (var i = 0; i < fieldsToHide.length; i++) {
+                    fieldsToHide[i].style.display = "none";
+                }
+            } else {
+                for (var i = 0; i < fieldsToHide.length; i++) {
+                    fieldsToHide[i].style.display = "";
+                }
+            }
+        }
+
+        window.onload = toggleFields; // Initial call to adjust visibility on page load
+    </script>
 </head>
 <body>
     <h2>Editar Incidencia</h2>
@@ -175,71 +191,71 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <tr>
             <th>Requiere Piezas</th>
             <td>
-                <select name="requiere_piezas">
+                <select name="requiere_piezas" onchange="toggleFields()">
                     <option value="0" <?php echo $incidencia['requiere_piezas'] == '0' ? 'selected' : ''; ?>>No</option>
                     <option value="1" <?php echo $incidencia['requiere_piezas'] == '1' ? 'selected' : ''; ?>>Sí</option>
                 </select>
             </td>
         </tr>
-        <tr>
+        <tr class="hidden-fields">
             <th>Detalle de Piezas Requeridas</th>
             <td><input type="text" name="detalle_piezas_requeridas" value="<?php echo htmlspecialchars($incidencia['detalle_piezas_requeridas']); ?>"></td>
         </tr>
-        <tr>
+        <tr class="hidden-fields">
             <th>Requerimiento</th>
             <td>
                 <select name="requerimiento">
-                    <?php foreach ($tiposRefacciones as $refaccion): ?>
-                        <option value="<?php echo $refaccion['nombre']; ?>" <?php echo $incidencia['requerimiento'] == $refaccion['nombre'] ? 'selected' : ''; ?>>
+                    <?php foreach ($tiposRefacciones as $refaccion) { ?>
+                        <option value="<?php echo $refaccion['id']; ?>" <?php echo $incidencia['requerimiento'] == $refaccion['id'] ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($refaccion['nombre']); ?>
                         </option>
-                    <?php endforeach; ?>
+                    <?php } ?>
                 </select>
             </td>
         </tr>
-        <tr>
+        <tr class="hidden-fields">
             <th>Refacción Adicional 1</th>
             <td><input type="text" name="refaccion_adicional_1" value="<?php echo htmlspecialchars($incidencia['refaccion_adicional_1']); ?>"></td>
         </tr>
-        <tr>
+        <tr class="hidden-fields">
             <th>Requerimiento 1</th>
             <td>
                 <select name="requerimiento1">
-                    <?php foreach ($tiposRefacciones as $refaccion): ?>
-                        <option value="<?php echo $refaccion['nombre']; ?>" <?php echo $incidencia['requerimiento1'] == $refaccion['nombre'] ? 'selected' : ''; ?>>
+                    <?php foreach ($tiposRefacciones as $refaccion) { ?>
+                        <option value="<?php echo $refaccion['id']; ?>" <?php echo $incidencia['requerimiento1'] == $refaccion['id'] ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($refaccion['nombre']); ?>
                         </option>
-                    <?php endforeach; ?>
+                    <?php } ?>
                 </select>
             </td>
         </tr>
-        <tr>
+        <tr class="hidden-fields">
             <th>Refacción Adicional 2</th>
             <td><input type="text" name="refaccion_adicional_2" value="<?php echo htmlspecialchars($incidencia['refaccion_adicional_2']); ?>"></td>
         </tr>
-        <tr>
+        <tr class="hidden-fields">
             <th>Requerimiento 2</th>
             <td>
                 <select name="requerimiento2">
-                    <?php foreach ($tiposRefacciones as $refaccion): ?>
-                        <option value="<?php echo $refaccion['nombre']; ?>" <?php echo $incidencia['requerimiento2'] == $refaccion['nombre'] ? 'selected' : ''; ?>>
+                    <?php foreach ($tiposRefacciones as $refaccion) { ?>
+                        <option value="<?php echo $refaccion['id']; ?>" <?php echo $incidencia['requerimiento2'] == $refaccion['id'] ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($refaccion['nombre']); ?>
                         </option>
-                    <?php endforeach; ?>
+                    <?php } ?>
                 </select>
             </td>
         </tr>
         <tr>
-            <th>Foto de Evidencia</th>
+            <th>Foto de Evidencia de Atención</th>
             <td>
-                <?php if ($incidencia['foto_evidencia_atencion']): ?>
-                    <img src="<?php echo $incidencia['foto_evidencia_atencion']; ?>" class="thumbnail" alt="Miniatura de la imagen">
-                <?php endif; ?>
-                <input type="file" name="foto_evidencia_atencion" accept="image/*">
+                <?php if ($incidencia['foto_evidencia_atencion']) { ?>
+                    <img class="thumbnail" src="<?php echo $incidencia['foto_evidencia_atencion']; ?>" alt="Foto de evidencia">
+                <?php } ?>
+                <input type="file" name="foto_evidencia_atencion">
             </td>
         </tr>
     </table>
-    <button type="submit">Actualizar Incidencia</button>
-    </form>
+    <button type="submit">Actualizar</button>
+</form>
 </body>
 </html>

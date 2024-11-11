@@ -23,10 +23,10 @@ class Database {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function updateFirma($id, $firma) {
-        $sql = "UPDATE incidencias SET estado = 'cerrado', atendido = 1, firma = ? WHERE id = ?";
+    public function updateFirma($id, $firma, $fotoCierre) {
+        $sql = "UPDATE incidencias SET estado = 'cerrado', atendido = 1, firma = ?, foto_evidencia_atencion = ?, fecha_atencion = NOW() WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
-        return $stmt->execute([$firma, $id]);
+        return $stmt->execute([$firma, $fotoCierre, $id]);
     }
 }
 
@@ -35,8 +35,32 @@ $db = new Database();
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = $_POST['id'];
     $firma = $_POST['firma'];
-    $db->updateFirma($id, $firma);
-    echo "<script>window.close();</script>"; // Cierra la ventana emergente tras la actualización
+
+    // Verifica que el archivo haya sido subido correctamente
+    if (isset($_FILES['foto_evidencia_atencion']) && $_FILES['foto_evidencia_atencion']['error'] === UPLOAD_ERR_OK) {
+        // Define la carpeta de destino
+        $uploadDir = 'uploads/'; // Carpeta donde guardarás las imágenes
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true); // Crea la carpeta si no existe
+        }
+        
+        // Define el nombre del archivo (asegúrate de evitar nombres duplicados)
+        $uploadFile = $uploadDir . basename($_FILES['foto_evidencia_atencion']['name']);
+        
+        // Mueve el archivo a la carpeta de destino
+        if (move_uploaded_file($_FILES['foto_evidencia_atencion']['tmp_name'], $uploadFile)) {
+            // Llama a la función para actualizar los datos con la ruta del archivo
+            if ($db->updateFirma($id, $firma, $uploadFile)) {
+                echo "<script>alert('Actualización exitosa'); window.close();</script>";
+            } else {
+                echo "Error: No se pudo actualizar el registro.";
+            }
+        } else {
+            echo "Error al guardar la imagen en el servidor.";
+        }
+    } else {
+        echo "Error al cargar la imagen.";
+    }
     exit();
 }
 
@@ -64,7 +88,7 @@ $incidencia = $db->getIncidenciaById($id);
         }
 
         form {
-            width: 300px;
+            width: 350px;
             margin: 20px auto;
             padding: 20px;
             background-color: #fff;
@@ -78,7 +102,7 @@ $incidencia = $db->getIncidenciaById($id);
             font-weight: bold;
         }
 
-        input[type="text"], input[type="submit"] {
+        input[type="text"], input[type="file"], input[type="submit"] {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
@@ -96,24 +120,21 @@ $incidencia = $db->getIncidenciaById($id);
         input[type="submit"]:hover {
             background-color: #218838;
         }
-
-        .success {
-            color: green;
-            text-align: center;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
     <h2>Editar Firma de Incidencia</h2>
 
-    <form method="POST" action="cierre.php">
+    <form method="POST" action="cierre.php" enctype="multipart/form-data">
         <input type="hidden" name="id" value="<?php echo $incidencia['id']; ?>">
 
         <label for="firma">Firma:</label>
         <input type="text" name="firma" id="firma" value="<?php echo $incidencia['firma']; ?>" required>
 
-        <input type="submit" value="Actualizar Firma">
+        <label for="foto_evidencia_atencion">Foto de Cierre:</label>
+        <input type="file" name="foto_evidencia_atencion" id="foto_evidencia_atencion" required>
+
+        <input type="submit" value="Actualizar Firma y Foto">
     </form>
 </body>
 </html>

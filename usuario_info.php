@@ -7,7 +7,6 @@ class Database {
     private $password = "Coemsa.2024";
     private $conn;
 
-
     public function __construct() {
         try {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
@@ -84,95 +83,110 @@ $incidencias = $db->getIncidencias(
 </head>
 
 <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+    }
 
-        h2 {
-            text-align: center;
-            margin-top: 20px;
-        }
+    h2 {
+        text-align: center;
+        margin-top: 20px;
+    }
 
-        .mensaje {
-            text-align: center;
-            color: green;
-            margin: 10px 0;
-        }
+    .mensaje {
+        text-align: center;
+        color: green;
+        margin: 10px 0;
+    }
 
-        form {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-        }
+    form {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+    }
 
-        form label {
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: block;
-        }
+    form label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+    }
 
-        form input[type="text"],
-        form textarea {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
+    form input[type="text"],
+    form textarea {
+        width: calc(100% - 22px);
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
 
-        form textarea {
-            height: 100px;
-        }
+    form textarea {
+        height: 100px;
+    }
 
-        form button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
+    form button {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
 
-        form button:hover {
-            background-color: #218838;
-        }
+    form button:hover {
+        background-color: #218838;
+    }
 
-        form select {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
+    form select {
+        width: calc(100% - 22px);
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
 
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+    table {
+        width: 80%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 
-        table th, table td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: center;
-        }
+    table th, table td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
 
-        table th {
-            background-color: #28a745;
-            color: white;
-        }
-    </style>
+    table th {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .estado-cerrado {
+        background-color: red;
+        color: white;
+    }
+
+    .estado-fallando {
+        background-color: yellow;
+        color: black;
+    }
+
+    .estado-funcionando {
+        background-color: green;
+        color: white;
+    }
+</style>
 
 <body>
     <h2>Filtrar Incidencias</h2>
@@ -221,7 +235,7 @@ $incidencias = $db->getIncidencias(
     </form>
 
     <h2>Lista de Incidencias</h2>
-        <table>
+    <table>
         <thead>
             <tr>
                 <th>ID</th>
@@ -251,34 +265,46 @@ $incidencias = $db->getIncidencias(
             </tr>
         </thead>
         <tbody>
-        <?php foreach ($incidencias as $incidencia): ?>
-            <tr>
-                <td><?php echo $incidencia['id']; ?></td>
-                <td><?php echo $incidencia['fecha_reporte']; ?></td>
-                <td><?php echo $incidencia['quien_reporta']; ?></td>
-                <td><?php echo $incidencia['tipo']; ?></td>
-                <td><?php echo $incidencia['lugar']; ?></td>
-                <td><?php echo $incidencia['equipo']; ?></td>
-                <td><?php echo $incidencia['descripcion']; ?></td>
-                <td><?php echo $incidencia['operando'] ? 'Sí' : 'No'; ?></td>
-                <td><?php echo $incidencia['imagen']; ?></td>
-                <td><?php echo $incidencia['reincidencia'] ? 'Sí' : 'No'; ?></td>
-                <td><?php echo $incidencia['incidencia_relacionada']; ?></td>
-                <td><?php echo $incidencia['estado']; ?></td>
-                <td><?php echo $incidencia['area']; ?></td>
-                <td><?php echo $incidencia['tecnico']; ?></td>
-                <td><?php echo $incidencia['diagnostico']; ?></td>
-                <td><?php echo $incidencia['requiere_piezas'] ? 'Sí' : 'No'; ?></td>
-                <td><?php echo $incidencia['detalle_piezas_requeridas']; ?></td>
-                <td><?php echo $incidencia['refaccion_adicional_1']; ?></td>
-                <td><?php echo $incidencia['refaccion_adicional_2']; ?></td>
-                <td><?php echo $incidencia['foto_evidencia_atencion']; ?></td>
-                <td><?php echo $incidencia['fecha_atencion']; ?></td>
-                <td><?php echo $incidencia['atendido'] ? 'Sí' : 'No'; ?></td>
-                <td><?php echo $incidencia['firma']; ?></td>
-                <td><button onclick="window.location.href='visualizar.php?id=<?php echo $incidencia['id']; ?>'">Visualizar</button></td>
-            </tr>
-        <?php endforeach; ?>
+            <?php foreach ($incidencias as $incidencia): ?>
+                <tr>
+                    <td><?php echo $incidencia['id']; ?></td>
+                    <td><?php echo $incidencia['fecha_reporte']; ?></td>
+                    <td><?php echo $incidencia['quien_reporta']; ?></td>
+                    <td><?php echo $incidencia['tipo']; ?></td>
+                    <td><?php echo $incidencia['lugar']; ?></td>
+                    <td><?php echo $incidencia['equipo']; ?></td>
+                    <td><?php echo $incidencia['descripcion']; ?></td>
+                    <td><?php echo $incidencia['operando'] ? 'Sí' : 'No'; ?></td>
+                    <td><?php echo $incidencia['imagen']; ?></td>
+                    <td><?php echo $incidencia['reincidencia'] ? 'Sí' : 'No'; ?></td>
+                    <td><?php echo $incidencia['incidencia_relacionada']; ?></td>
+
+                    <!-- Aplicar color al estado -->
+                    <td class="<?php 
+                        if ($incidencia['estado'] == 'cerrado') {
+                            echo 'estado-cerrado';
+                        } elseif ($incidencia['estado'] == 'fallando') {
+                            echo 'estado-fallando';
+                        } elseif ($incidencia['estado'] == 'funcionando') {
+                            echo 'estado-funcionando';
+                        } ?>">
+                        <?php echo $incidencia['estado']; ?>
+                    </td>
+
+                    <td><?php echo $incidencia['area']; ?></td>
+                    <td><?php echo $incidencia['tecnico']; ?></td>
+                    <td><?php echo $incidencia['diagnostico']; ?></td>
+                    <td><?php echo $incidencia['requiere_piezas'] ? 'Sí' : 'No'; ?></td>
+                    <td><?php echo $incidencia['detalle_piezas_requeridas']; ?></td>
+                    <td><?php echo $incidencia['refaccion_adicional_1']; ?></td>
+                    <td><?php echo $incidencia['refaccion_adicional_2']; ?></td>
+                    <td><?php echo $incidencia['foto_evidencia_atencion']; ?></td>
+                    <td><?php echo $incidencia['fecha_atencion']; ?></td>
+                    <td><?php echo $incidencia['atendido'] ? 'Sí' : 'No'; ?></td>
+                    <td><?php echo $incidencia['firma']; ?></td>
+                    <td><button onclick="window.location.href='visualizar.php?id=<?php echo $incidencia['id']; ?>'">Visualizar</button></td>
+                </tr>
+            <?php endforeach; ?>
         </tbody>
     </table>
 </body>

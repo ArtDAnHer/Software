@@ -7,7 +7,6 @@ class Database {
     private $password = "Coemsa.2024";
     private $conn;
 
-
     public function __construct() {
         try {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
@@ -18,7 +17,7 @@ class Database {
     }
 
     public function getIncidencias() {
-        $sql = "SELECT * FROM incidencias where atendido = 0 "; // Consulta para obtener todos los datos de la tabla incidencias
+        $sql = "SELECT * FROM incidencias WHERE atendido = 0";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -68,6 +67,21 @@ $incidencias = $db->getIncidencias();
             color: white;
         }
 
+        .estado-cerrado {
+            background-color: red;
+            color: white;
+        }
+
+        .estado-funcionando {
+            background-color: green;
+            color: white;
+        }
+
+        .estado-fallando {
+            background-color: yellow;
+            color: black;
+        }
+
         button {
             background-color: #28a745;
             color: white;
@@ -85,7 +99,7 @@ $incidencias = $db->getIncidencias();
     <script>
         function abrirPopup(id) {
             var url = 'cierre.php?id=' + id;
-            var popup = window.open(url, 'cierre', 'width=600,height=600');
+            var popup = window.open(url, 'Editar Incidencia', 'width=600,height=600');
         }
     </script>
 </head>
@@ -111,13 +125,12 @@ $incidencias = $db->getIncidencias();
                 <th>Diagnóstico</th>
                 <th>Requiere Piezas</th>
                 <th>Detalle Piezas Requeridas</th>
+                <th>Requerimiento</th>
                 <th>Refacción Adicional 1</th>
+                <th>Requerimiento1</th>
                 <th>Refacción Adicional 2</th>
+                <th>Requerimiento2</th>
                 <th>Foto Evidencia Atención</th>
-                <th>Fecha Atención</th>
-                <th>Atendido</th>
-                <th>Firma</th>
-                <th>File</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -135,19 +148,28 @@ $incidencias = $db->getIncidencias();
                 <td><?php echo $incidencia['imagen']; ?></td>
                 <td><?php echo $incidencia['reincidencia'] ? 'Sí' : 'No'; ?></td>
                 <td><?php echo $incidencia['incidencia_relacionada']; ?></td>
-                <td><?php echo $incidencia['estado']; ?></td>
+                <!-- Aplicar color al estado -->
+                <td class="<?php 
+                    if ($incidencia['estado'] == 'cerrado') {
+                        echo 'estado-cerrado';
+                    } elseif ($incidencia['estado'] == 'fallando') {
+                        echo 'estado-fallando';
+                    } elseif ($incidencia['estado'] == 'funcionando') {
+                        echo 'estado-funcionando';
+                    } ?>">
+                        <?php echo $incidencia['estado']; ?>
+                </td>
                 <td><?php echo $incidencia['area']; ?></td>
                 <td><?php echo $incidencia['tecnico']; ?></td>
                 <td><?php echo $incidencia['diagnostico']; ?></td>
                 <td><?php echo $incidencia['requiere_piezas'] ? 'Sí' : 'No'; ?></td>
                 <td><?php echo $incidencia['detalle_piezas_requeridas']; ?></td>
+                <td><?php echo $incidencia['requerimiento']; ?></td>
                 <td><?php echo $incidencia['refaccion_adicional_1']; ?></td>
+                <td><?php echo $incidencia['requerimiento1']; ?></td>
                 <td><?php echo $incidencia['refaccion_adicional_2']; ?></td>
+                <td><?php echo $incidencia['requerimiento2']; ?></td>
                 <td><?php echo $incidencia['foto_evidencia_atencion']; ?></td>
-                <td><?php echo $incidencia['fecha_atencion']; ?></td>
-                <td><?php echo $incidencia['atendido'] ? 'Sí' : 'No'; ?></td>
-                <td><?php echo $incidencia['firma']; ?></td>
-                <td><button onclick="window.location.href='visualizar.php?id=<?php echo $incidencia['id']; ?>'">Visualizar</button></td>
                 <td><button onclick="abrirPopup(<?php echo $incidencia['id']; ?>)">Editar</button></td>
             </tr>
         <?php endforeach; ?>
