@@ -15,6 +15,9 @@ if (isset($_GET['page'])) {
         case 'alta':
             $fileToInclude = 'incidencias_alta.php';
             break;
+        case 'asignar_tecnico':
+            $fileToInclude = 'asignartecnico.php';
+            break;
         case 'diagnostico':
             $fileToInclude = 'lista_diacnosticos.php';
             break;
@@ -61,6 +64,7 @@ $username = $_SESSION['username'];
             <div>
                 °<a href="?page=alta_previa">Alta incidencia previa</a><br>
                 °<a href="?page=alta">Alta</a><br>
+                °<a href="?page=asignar_tecnico">Asignar tecnico</a><br>
                 °<a href="?page=diagnostico">Diagnistico</a><br>
                 °<a href="?page=finalizacion">Finalizacion</a><br>
 

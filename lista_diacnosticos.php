@@ -83,7 +83,7 @@ $incidencias = $db->getIncidencias();
     </style>
     <script>
         function abrirPopup(id) {
-            var url = 'cierre.php?id=' + id;
+            var url = 'crear_diagnostico.php?id=' + id;
             var popup = window.open(url, 'cierre', 'width=600,height=600');
         }
     </script>

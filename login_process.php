@@ -16,13 +16,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->execute();
 
         if ($stmt->rowCount() == 1) {
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
             $_SESSION['username'] = $username;
-            header("Location: welcome.php");
+            $_SESSION['rol'] = $user['rol'];
+
+            // Redirigir según el rol del usuario
+            if ($_SESSION['rol'] === 'tecnico') {
+                header("Location: tecnico.php");
+            } elseif ($_SESSION['rol'] === 'estacionamiento') {
+                header("Location: estacionamiento.php");
+            } else {
+                header("Location: welcome.php");
+            }
             exit();
         } else {
             $_SESSION['username'] = $username;
             header("Location: Usuario.php");
-            exit(); // Importante para detener la ejecución después de la redirección
+            exit();
         }
     } else {
         $_SESSION['username'] = $username;
@@ -30,9 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 } else {
-    $_SESSION['username'] = $username;
     header("Location: error.php");
-    echo "Método de solicitud no permitido.";
     exit();
 }
 ?>
