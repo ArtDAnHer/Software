@@ -1,12 +1,11 @@
 <?php
 class Database {
-    private $db = "insidencias";
-    private $ip = "192.168.1.17";
+    private $db = "reportes_fallas";
+    private $ip = "localhost";
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";
     private $conn;
-
     public function __construct() {
         try {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);

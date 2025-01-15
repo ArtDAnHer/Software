@@ -7,6 +7,7 @@ class Database {
     private $password = "Coemsa.2024";
     private $conn;
 
+
     public function __construct() {
         try {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
@@ -17,9 +18,52 @@ class Database {
     }
 
     public function getIncidencias() {
-        $sql = "SELECT * FROM incidencias WHERE atendido = 0";
+        $sql = "SELECT * FROM incidencias where atendido = 0";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function updateIncidencia($data) {
+        $sql = "UPDATE incidencias SET 
+                    fecha_reporte = :fecha_reporte, 
+                    quien_reporta = :quien_reporta, 
+                    tipo = :tipo, 
+                    lugar = :lugar, 
+                    equipo = :equipo, 
+                    estado = :estado, 
+                    area = :area, 
+                    descripcion = :descripcion, 
+                    operando = :operando, 
+                    imagen = :imagen, 
+                    reincidencia = :reincidencia, 
+                    incidencia_relacionada = :incidencia_relacionada 
+                WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+
+        // Bind params for all the fields
+        $stmt->bindParam(':fecha_reporte', $data['fecha_reporte']);
+        $stmt->bindParam(':quien_reporta', $data['quien_reporta']);
+        $stmt->bindParam(':tipo', $data['tipo']);
+        $stmt->bindParam(':lugar', $data['lugar']);
+        $stmt->bindParam(':equipo', $data['equipo']);
+        $stmt->bindParam(':estado', $data['estado']);
+        $stmt->bindParam(':area', $data['area']);
+        $stmt->bindParam(':descripcion', $data['descripcion']);
+        $stmt->bindParam(':operando', $data['operando']);
+        $stmt->bindParam(':imagen', $data['imagen']);
+        $stmt->bindParam(':reincidencia', $data['reincidencia']);
+        $stmt->bindParam(':incidencia_relacionada', $data['incidencia_relacionada']);
+        $stmt->bindParam(':id', $data['id']);
+
+        return $stmt->execute();
+    }
+
+    public function getIncidenciaById($id) {
+        $sql = "SELECT * FROM incidencias WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }
 
@@ -32,7 +76,7 @@ $incidencias = $db->getIncidencias();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Incidencias</title>
+    <title>Incidencias</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -98,13 +142,13 @@ $incidencias = $db->getIncidencias();
     </style>
     <script>
         function abrirPopup(id) {
-            var url = 'cierre.php?id=' + id;
+            var url = 'asignartec.php?id=' + id;
             var popup = window.open(url, 'Editar Incidencia', 'width=600,height=600');
         }
     </script>
 </head>
 <body>
-    <h2>Lista de Incidencias</h2>
+    <h2>Asignacion manual de tecnico</h2>
     <table>
         <thead>
             <tr>
@@ -122,15 +166,6 @@ $incidencias = $db->getIncidencias();
                 <th>Estado</th>
                 <th>Área</th>
                 <th>Técnico</th>
-                <th>Diagnóstico</th>
-                <th>Requiere Piezas</th>
-                <th>Detalle Piezas Requeridas</th>
-                <th>Requerimiento</th>
-                <th>Refacción Adicional 1</th>
-                <th>Requerimiento1</th>
-                <th>Refacción Adicional 2</th>
-                <th>Requerimiento2</th>
-                <th>Foto Evidencia Atención</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -161,15 +196,6 @@ $incidencias = $db->getIncidencias();
                 </td>
                 <td><?php echo $incidencia['area']; ?></td>
                 <td><?php echo $incidencia['tecnico']; ?></td>
-                <td><?php echo $incidencia['diagnostico']; ?></td>
-                <td><?php echo $incidencia['requiere_piezas'] ? 'Sí' : 'No'; ?></td>
-                <td><?php echo $incidencia['detalle_piezas_requeridas']; ?></td>
-                <td><?php echo $incidencia['requerimiento']; ?></td>
-                <td><?php echo $incidencia['refaccion_adicional_1']; ?></td>
-                <td><?php echo $incidencia['requerimiento1']; ?></td>
-                <td><?php echo $incidencia['refaccion_adicional_2']; ?></td>
-                <td><?php echo $incidencia['requerimiento2']; ?></td>
-                <td><?php echo $incidencia['foto_evidencia_atencion']; ?></td>
                 <td><button onclick="abrirPopup(<?php echo $incidencia['id']; ?>)">Editar</button></td>
             </tr>
         <?php endforeach; ?>

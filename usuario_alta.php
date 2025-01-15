@@ -1,7 +1,7 @@
 <?php
 class Database {
-    private $db = "Boletaje";
-    private $ip = "192.168.1.17";
+    private $db = "reportes_fallas";
+    private $ip = "localhost";
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";

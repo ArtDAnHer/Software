@@ -21,12 +21,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['rol'] = $user['rol'];
 
             // Redirigir según el rol del usuario
-            if ($_SESSION['rol'] === 'tecnico') {
+            if ($_SESSION['rol'] === 'Tecnico' || $_SESSION['rol'] === 'Mantenimiento') {
                 header("Location: tecnico.php");
-            } elseif ($_SESSION['rol'] === 'estacionamiento') {
+            } elseif ($_SESSION['rol'] === 'Estacionamiento') {
                 header("Location: estacionamiento.php");
-            } else {
+            } elseif ($_SESSION['rol'] === 'Admin') {
                 header("Location: welcome.php");
+            } else {
+                header("Location: error.php");
             }
             exit();
         } else {

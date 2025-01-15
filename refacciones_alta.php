@@ -7,7 +7,6 @@ class Database {
     private $password = "Coemsa.2024";
     private $conn;
 
-
     public function __construct() {
         try {
             $this->conn = new PDO("mysql:host={$this->ip};port={$this->port};dbname={$this->db}", $this->username, $this->password);
@@ -17,30 +16,18 @@ class Database {
         }
     }
 
-    public function insertTec($data) {
-        $sql = "INSERT INTO Tec (tecnico, plaza) VALUES (:tecnico, :plaza)";
+    public function insertTipoRefaccion($data) {
+        $sql = "INSERT INTO tipos_refacciones (nombre, descripcion) VALUES (:nombre, :descripcion)";
         $stmt = $this->conn->prepare($sql);
 
-        $stmt->bindParam(':tecnico', $data['tecnico']); // ID del técnico
-        $stmt->bindParam(':plaza', $data['plaza']); // ID de la plaza
+        $stmt->bindParam(':nombre', $data['nombre']);
+        $stmt->bindParam(':descripcion', $data['descripcion']);
 
         return $stmt->execute();
     }
 
-    public function getTecnicosRegistrados() {
-        $sql = "SELECT `Tec`.`id`, `Tec`.`tecnico`, `Tec`.`plaza` FROM `reportes_fallas`.`Tec`"; // Traer los datos de la tabla Tec con relaciones
-        $stmt = $this->conn->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getTecnicosList() {
-        $sql = "SELECT * FROM reportes_fallas.tecnico"; // Obtener la lista de técnicos
-        $stmt = $this->conn->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getLugares() {
-        $sql = "SELECT id, nombre FROM estacionamiento"; // Obtener los lugares (plazas)
+    public function getTiposRefacciones() {
+        $sql = "SELECT * FROM tipos_refacciones";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -50,22 +37,20 @@ $mensaje = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'tecnico' => $_POST['tecnico'],
-        'plaza' => $_POST['plaza'],
+        'nombre' => $_POST['nombre'],
+        'descripcion' => $_POST['descripcion']
     ];
 
     $db = new Database();
-    if ($db->insertTec($data)) {
-        $mensaje = "Técnico registrado exitosamente.";
+    if ($db->insertTipoRefaccion($data)) {
+        $mensaje = "Tipo de refacción registrado exitosamente.";
     } else {
-        $mensaje = "Error al registrar el técnico.";
+        $mensaje = "Error al registrar el tipo de refacción.";
     }
 }
 
 $db = new Database();
-$tecnicosRegistrados = $db->getTecnicosRegistrados(); // Obtener los técnicos ya registrados
-$tecnicosList = $db->getTecnicosList(); // Obtener la lista de técnicos
-$lugares = $db->getLugares(); // Obtener los lugares (plazas)
+$tiposRefacciones = $db->getTiposRefacciones(); // Obtener los tipos de refacciones registrados
 ?>
 
 <!DOCTYPE html>
@@ -73,13 +58,12 @@ $lugares = $db->getLugares(); // Obtener los lugares (plazas)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alta de Técnicos</title>
+    <title>Alta de Tipo de Refacción</title>
     <style>
+        /* Estilos para el formulario y tabla */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
         }
 
         h2 {
@@ -108,7 +92,7 @@ $lugares = $db->getLugares(); // Obtener los lugares (plazas)
             display: block;
         }
 
-        form select {
+        form input[type="text"] {
             width: calc(100% - 22px);
             padding: 10px;
             margin-bottom: 15px;
@@ -153,7 +137,7 @@ $lugares = $db->getLugares(); // Obtener los lugares (plazas)
     </style>
 </head>
 <body>
-    <h2>Alta de Técnicos</h2>
+    <h2>Alta de Tipo de Refacción</h2>
     <hr>
     
     <?php if ($mensaje): ?>
@@ -161,46 +145,35 @@ $lugares = $db->getLugares(); // Obtener los lugares (plazas)
     <?php endif; ?>
 
     <form method="POST" action="">
-        <label for="tecnico">Técnico</label>
-        <select name="tecnico" id="tecnico" required>
-            <option value="">Seleccione un técnico</option>
-            <?php foreach ($tecnicosList as $tec): ?>
-                <option value="<?php echo $tec['tecnico']; ?>"><?php echo $tec['tecnico']; ?></option>
-            <?php endforeach; ?>
-        </select>
+        <label for="nombre">Nombre de la Refacción</label>
+        <input type="text" name="nombre" id="nombre" required><br>
 
-        <label for="plaza">Plaza</label>
-        <select name="plaza" id="plaza" required>
-            <option value="">Seleccione una plaza</option>
-            <?php foreach ($lugares as $lugar): ?>
-                <option value="<?php echo $lugar['nombre']; ?>"><?php echo $lugar['nombre']; ?></option>
-            <?php endforeach; ?>
-        </select>
+        <label for="descripcion">Descripción</label>
+        <input type="text" name="descripcion" id="descripcion"><br>
 
-        <button type="submit">Registrar Técnico</button>
+        <button type="submit">Registrar Tipo de Refacción</button>
     </form>
 
-    <h2>Técnicos Registrados</h2>
+    <!-- Sección para mostrar la tabla de tipos de refacciones -->
+    <h2>Tipos de Refacciones Registradas</h2>
     <table>
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Técnico</th>
-                <th>Plaza</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
             </tr>
         </thead>
         <tbody>
-            <?php if ($tecnicosRegistrados): ?>
-                <?php foreach ($tecnicosRegistrados as $tec): ?>
+            <?php if ($tiposRefacciones): ?>
+                <?php foreach ($tiposRefacciones as $tipo): ?>
                     <tr>
-                        <td><?php echo $tec['id']; ?></td>
-                        <td><?php echo $tec['tecnico']; ?></td> <!-- Mostrar nombre del técnico -->
-                        <td><?php echo $tec['plaza']; ?></td>
+                        <td><?php echo $tipo['nombre']; ?></td>
+                        <td><?php echo $tipo['descripcion']; ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="3">No hay técnicos registrados.</td>
+                    <td colspan="2">No hay tipos de refacciones registradas.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

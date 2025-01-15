@@ -1,7 +1,7 @@
 <?php
 class Database {
-    private $db = "insidencias";
-    private $ip = "192.168.1.17";
+    private $db = "reportes_fallas";
+    private $ip = "localhost";
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";
@@ -234,6 +234,7 @@ $incidencias = $db->getIncidencias(
         <button type="submit">Buscar</button>
     </form>
 
+    
     <h2>Lista de Incidencias</h2>
     <table>
         <thead>
@@ -275,17 +276,17 @@ $incidencias = $db->getIncidencias(
                     <td><?php echo $incidencia['equipo']; ?></td>
                     <td><?php echo $incidencia['descripcion']; ?></td>
                     <td><?php echo $incidencia['operando'] ? 'Sí' : 'No'; ?></td>
-                    <td><?php echo $incidencia['imagen']; ?></td>
+                    <td><a href= <?php echo $incidencia['imagen']; ?>><?php echo $incidencia['imagen']; ?></a></td>
                     <td><?php echo $incidencia['reincidencia'] ? 'Sí' : 'No'; ?></td>
                     <td><?php echo $incidencia['incidencia_relacionada']; ?></td>
 
                     <!-- Aplicar color al estado -->
                     <td class="<?php 
-                        if ($incidencia['estado'] == 'cerrado') {
+                        if ($incidencia['estado'] == 'Cerrado') {
                             echo 'estado-cerrado';
-                        } elseif ($incidencia['estado'] == 'fallando') {
+                        } elseif ($incidencia['estado'] == 'Funcional') {
                             echo 'estado-fallando';
-                        } elseif ($incidencia['estado'] == 'funcionando') {
+                        } elseif ($incidencia['estado'] == 'Activo') {
                             echo 'estado-funcionando';
                         } ?>">
                         <?php echo $incidencia['estado']; ?>

@@ -28,9 +28,10 @@ class Database {
 
     public function insertIncidencia($data) {
         $sql = "INSERT INTO incidencias (fecha_reporte, quien_reporta, tipo, tipo_falla, lugar, descripcion, operando, imagen, reincidencia, incidencia_relacionada, estado, tecnico) 
-                VALUES (CURDATE(), :quien_reporta, :tipo, :tipo_falla, :lugar, :descripcion, :operando, :imagen, :reincidencia, :incidencia_relacionada, :estado, :tecnico)";
+                VALUES (:fecha_reporte, :quien_reporta, :tipo, :tipo_falla, :lugar, :descripcion, :operando, :imagen, :reincidencia, :incidencia_relacionada, :estado, :tecnico)";
         $stmt = $this->conn->prepare($sql);
-    
+
+        $stmt->bindParam(':fecha_reporte', $data['fecha_reporte']);
         $stmt->bindParam(':quien_reporta', $data['quien_reporta']);
         $stmt->bindParam(':tipo', $data['tipo']);
         $stmt->bindParam(':tipo_falla', $data['tipo_falla']);
@@ -42,13 +43,13 @@ class Database {
         $stmt->bindParam(':incidencia_relacionada', $data['incidencia_relacionada']);
         $stmt->bindParam(':estado', $data['estado']);
         $stmt->bindParam(':tecnico', $data['tecnico']);
-    
+
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
         }
         return false;
     }
-    
+
     // Funciones para obtener datos para los selects
     public function getTipos() {
         $sql = "SELECT id, nombre FROM tipo_equipo"; // Cambiar según tu estructura de datos
@@ -84,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_SESSION['username'])) {
         // Recoger los datos del formulario
         $data = [
+            'fecha_reporte' => $_POST['fecha_reporte'], // Añade la fecha de reporte
             'quien_reporta' => $_SESSION['username'],
             'tipo' => $_POST['tipo'] ?? '',
             'tipo_falla' => $_POST['tipo_falla'] ?? '',
@@ -171,7 +173,7 @@ $estados = $db->getEstados();
             display: block;
             margin-bottom: 8px;
         }
-        select, input[type="text"], textarea {
+        select, input[type="text"], input[type="date"], textarea {
             width: 100%;
             padding: 8px;
             margin-bottom: 15px;
@@ -200,6 +202,9 @@ $estados = $db->getEstados();
 <h2>Registro de Incidencias</h2>
 <div class="mensaje"><?php echo $mensaje; ?></div>
 <form method="POST" enctype="multipart/form-data">
+    <label for="fecha_reporte">Fecha de Reporte:</label>
+    <input type="date" name="fecha_reporte" required>
+
     <label for="tipo">Tipo de Incidencia:</label>
     <select name="tipo" required>
         <option value="">Seleccione un tipo</option>
@@ -216,35 +221,31 @@ $estados = $db->getEstados();
         <?php endforeach; ?>
     </select>
 
-    <label for="lugar">Estacionamiento:</label>
+    <label for="lugar">Lugar:</label>
     <select name="lugar" required>
-        <option value="">Seleccione un estacionamiento</option>
-        <?php foreach ($estacionamientos as $estacionamiento): ?>
-            <option value="<?php echo $estacionamiento['nombre']; ?>"><?php echo $estacionamiento['nombre']; ?></option>
+        <option value="">Seleccione un lugar</option>
+        <?php foreach ($estacionamientos as $lugar): ?>
+            <option value="<?php echo $lugar['nombre']; ?>"><?php echo $lugar['nombre']; ?></option>
         <?php endforeach; ?>
     </select>
 
     <label for="descripcion">Descripción:</label>
-    <textarea name="descripcion" required></textarea>
+    <textarea name="descripcion" rows="4" required></textarea>
 
-    <label>¿Operando?</label>
-    <select name="operando">
-        <option value="si">Sí</option>
-        <option value="no">No</option>
-    </select>
+    <label for="operando">Operando:</label>
+    <input type="radio" name="operando" value="si" required> Sí
+    <input type="radio" name="operando" value="no" required> No
 
     <label for="imagen">Imagen:</label>
-    <input type="file" name="imagen" accept="image/*">
+    <input type="file" name="imagen">
 
-    <label>¿Reincidencia?</label>
-    <select name="reincidencia" id="reincidencia" onchange="toggleIncidenciaRelacionada()">
-        <option value="no">No</option>
-        <option value="si">Sí</option>
-    </select>
+    <label for="reincidencia">¿Es una reincidencia?</label>
+    <input type="radio" name="reincidencia" value="si"> Sí
+    <input type="radio" name="reincidencia" value="no" checked> No
 
     <div id="incidencia_relacionada_group">
         <label for="incidencia_relacionada">Incidencia Relacionada:</label>
-        <input type="text" name="incidencia_relacionada" id="incidencia_relacionada">
+        <input type="text" name="incidencia_relacionada">
     </div>
 
     <label for="estado">Estado:</label>
@@ -264,12 +265,11 @@ $estados = $db->getEstados();
         const incidenciaRelacionadaGroup = document.getElementById('incidencia_relacionada_group');
         incidenciaRelacionadaGroup.style.display = (reincidencia === 'si') ? 'block' : 'none';
     }
-<!--
+
     <?php if ($exito): ?>
         // Abre el pop-up para seleccionar el técnico solo si la incidencia se registró correctamente
         window.open("seleccionar_tecnico.php", "popup", "width=600,height=600,scrollbars=yes,resizable=yes");
     <?php endif; ?>
--->
 </script>
 
 </body>
