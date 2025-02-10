@@ -5,8 +5,8 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class Database {
-    private $db = "Boletaje";
-    private $ip = "192.168.1.17";
+    private $db = "boletaje";
+    private $ip = "192.168.1.73";
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";

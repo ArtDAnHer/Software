@@ -1,6 +1,6 @@
 <?php
 // Configuración de la conexión a la base de datos
-$servername = "192.168.1.17";
+$servername = "192.168.1.73";
 $username = "celular";
 $password = "Coemsa.2024";
 $dbname = "boletaje";
@@ -10,20 +10,33 @@ try {
     $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // Obtener estacionamientos disponibles desde la base de datos
+    $estacionamientos = [];
+    $query = $conn->query("SELECT DISTINCT estacionamiento FROM estacionamiento");
+    $estacionamientos = $query->fetchAll(PDO::FETCH_ASSOC);
+
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        // Verificar si hay datos enviados desde el formulario
         if (isset($_POST['entries']) && is_array($_POST['entries'])) {
             $entries = $_POST['entries'];
 
             // Preparar la consulta SQL
-            $stmt = $conn->prepare("INSERT INTO boletos (Fecha, Turno, TOBoleto, TOImporte, TPBoleto, TPImporte, RBoletos, RImporte, CBoletos, CImporte, TBoleto, TImporte, BEmitidos, BControlados, Otros, Deposito, Estacionamiento)
-        VALUES (:Fecha, :Turno, :TOBoleto, :TOImporte, :TPBoleto, :TPImporte, :RBoletos, :RImporte, :CBoletos, :CImporte, :TBoleto, :TImporte, :BEmitidos, :BControlados, :Otros, :Deposito, :Estacionamiento)");
+            $stmt = $conn->prepare("INSERT INTO boletos (
+                Fecha, Turno, TOBoleto, TOImporte, TPBoleto, TPImporte, RBoletos, RImporte, CBoletos, CImporte, 
+                TBoleto, TImporte, BEmitidos, BControlados, Otros, Deposito, Estacionamiento, boletos_perdidos, importe_boletos_perdidos, boletoNoUtil, apps
+            ) VALUES (
+                :Fecha, :Turno, :TOBoleto, :TOImporte, :TPBoleto, :TPImporte, :RBoletos, :RImporte, :CBoletos, :CImporte, 
+                :TBoleto, :TImporte, :BEmitidos, :BControlados, :Otros, :Deposito, :Estacionamiento, :BoletoPerdido, :ImporteBoletoPerdido, :boletoNoUtil, :apps
+            )");
 
-            // Procesar cada entrada
             foreach ($entries as $entry) {
-                // Ejecutar la consulta para cada fila del formulario
+                $entry = array_map('trim', $entry); // Eliminar espacios en blanco alrededor de los datos
+                
+                // Asegurarse de que el campo 'apps' exista en cada entrada, si no, establecerlo a 0
+                $apps = isset($entry['apps']) ? $entry['apps'] : 0;
+
+                // Ejecutar la consulta con los parámetros correctos
                 $stmt->execute([
-                    ':Estacionamiento' => $entry['Estacionamiento'],
+                    ':Fecha' => $entry['Fecha'],
                     ':Turno' => $entry['Turno'],
                     ':TOBoleto' => $entry['TOBoleto'],
                     ':TOImporte' => $entry['TOImporte'],
@@ -39,14 +52,17 @@ try {
                     ':BControlados' => $entry['BControlados'],
                     ':Otros' => $entry['Otros'],
                     ':Deposito' => $entry['Deposito'],
-                    ':Fecha' => $entry['Fecha']
+                    ':Estacionamiento' => $entry['Estacionamiento'],
+                    ':BoletoPerdido' => $entry['BoletoPerdido'],
+                    ':ImporteBoletoPerdido' => $entry['ImporteBoletoPerdido'],
+                    ':boletoNoUtil' => $entry['boletoNoUtil'],
+                    ':apps' => $apps
                 ]);
             }
-
-            echo "Entradas guardadas correctamente.";
+            echo "<script>alert('Entradas guardadas correctamente.');</script>";
         }
     }
-} catch(PDOException $e) {
+} catch (PDOException $e) {
     echo "Error: " . $e->getMessage();
 }
 
@@ -60,81 +76,37 @@ $conn = null;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Entradas Múltiples</title>
     <style>
-         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-        h2 {
-            text-align: center;
-            margin: 20px 0;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-        .form-container {
-            flex: 1;
-            width: 100%;
-            overflow-y: auto;
-            padding-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        .buttons {
-            margin: 20px 0;
-            text-align: center;
-        }
-        .add-row-btn, .delete-btn, button[type="submit"] {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            margin: 10px;
-        }
-        .add-row-btn:hover, .delete-btn:hover, button[type="submit"]:hover {
-            background-color: #45a049;
-        }
-        .delete-btn {
-            background-color: #f44336;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; }
+        h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: center; }
+        th { background-color: #eaeaea; }
+        .form-container { overflow-y: auto; padding-bottom: 20px; }
+        .buttons { text-align: center; margin-top: 20px; }
+        button { margin: 5px; padding: 10px 20px; cursor: pointer; }
     </style>
     <script>
         function confirmSubmission(event) {
-            var confirmAction = confirm("¿Está seguro de que desea enviar estos datos?");
-            if (!confirmAction) {
+            if (!confirm("¿Está seguro de que desea enviar estos datos?")) {
                 event.preventDefault();
             }
         }
-
         function addEntry() {
-            var table = document.getElementById('entries').getElementsByTagName('tbody')[0];
-            var rowCount = table.rows.length;
+            const tableBody = document.querySelector('#entries tbody');
+            const rowCount = tableBody.rows.length;
+            const row = tableBody.insertRow();
 
-            var row = table.insertRow();
-            row.innerHTML = `
-                <td><select name="entries[${rowCount}][Estacionamiento]" required>
-                    <option value="">Seleccione un estacionamiento</option>
-                    <option value="Santin">Santin</option>
-                    <option value="Lomas Reforma">Lomas Reforma</option>
-                    <option value="City Center">City Center</option>
-                </select></td>
+            row.innerHTML = ` 
+                <td>
+                    <select name="entries[${rowCount}][Estacionamiento]" required>
+                        <option value="">Seleccione</option>
+                        <?php foreach ($estacionamientos as $est): ?>
+                            <option value="<?= htmlspecialchars($est['estacionamiento']) ?>">
+                                <?= htmlspecialchars($est['estacionamiento']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
                 <td><input type="text" name="entries[${rowCount}][Turno]" required></td>
                 <td><input type="number" name="entries[${rowCount}][TOBoleto]" required></td>
                 <td><input type="number" step="0.01" name="entries[${rowCount}][TOImporte]" required></td>
@@ -146,57 +118,68 @@ $conn = null;
                 <td><input type="number" step="0.01" name="entries[${rowCount}][CImporte]" required></td>
                 <td><input type="number" name="entries[${rowCount}][TBoleto]" required></td>
                 <td><input type="number" step="0.01" name="entries[${rowCount}][TImporte]" required></td>
+                <td><input type="number" name="entries[${rowCount}][BoletoPerdido]" required></td>
+                <td><input type="number" step="0.01" name="entries[${rowCount}][ImporteBoletoPerdido]" required></td>
                 <td><input type="number" name="entries[${rowCount}][BEmitidos]" required></td>
                 <td><input type="number" name="entries[${rowCount}][BControlados]" required></td>
                 <td><input type="number" name="entries[${rowCount}][Otros]" required></td>
                 <td><input type="number" step="0.01" name="entries[${rowCount}][Deposito]" required></td>
-                <td><input type="date" name="entries[${rowCount}][Fecha]" required></td>
-                <td><button type="button" class="delete-btn" onclick="deleteRow(this)">Eliminar</button></td>
+                <td><input type="number" step="0.01" name="entries[${rowCount}][apps]" required></td>
+                <td><input type="date" name="entries[${rowCount}][Fecha]" required value="<?= date('Y-m-d') ?>"></td>
+                <td><input type="number" step="0.01" name="entries[${rowCount}][boletoNoUtil]" required></td>
+                <td><button type="button" onclick="deleteRow(this)">Eliminar</button></td>
             `;
         }
-
         function deleteRow(button) {
-            var row = button.parentNode.parentNode;
-            row.parentNode.removeChild(row);
+            const row = button.parentNode.parentNode;
+            row.remove();
         }
     </script>
 </head>
 <body>
     <h2>Crear Nuevas Entradas</h2>
-    <hr>
-    <form id="entryForm" method="POST" action="" onsubmit="confirmSubmission(event)">
+    
+    <h2>Centro Republica del Salvador</h2><br>
+    ordinario = autos<br>
+    preferencial = camionetas<br>
+    recobros = motos<br>
+    tolerancia = hotel<br>
+
+    <form method="POST" onsubmit="confirmSubmission(event)">
         <div class="form-container">
             <table id="entries">
                 <thead>
                     <tr>
                         <th>Estacionamiento</th>
                         <th>Turno</th>
-                        <th>Tarifa ordinaria boleto</th>
-                        <th>Tarifa ordinaria importe</th>
-                        <th>Tarifa preferencial boleto</th>
-                        <th>Tarifa preferencial importe</th>
-                        <th>Recobros boletos</th>
-                        <th>Recobros importe</th>
-                        <th>Cortesia boletos</th>
-                        <th>Cortesia importe</th>
-                        <th>Tolerancia boleto</th>
-                        <th>Tolerancia importe</th>
-                        <th>Boletos emitidos</th>
-                        <th>Boletos controlados</th>
+                        <th>Tiempo Ordinario Boleto</th>
+                        <th>Tiempo Ordinario Importe</th>
+                        <th>Tiempo Preferencial Boleto</th>
+                        <th>Tiempo Preferencial Importe</th>
+                        <th>Recobro Boletos</th>
+                        <th>Recobro Importe</th>
+                        <th>Cortecía Boletos</th>
+                        <th>Cortecía Importe</th>
+                        <th>Tolerancia Boleto</th>
+                        <th>Tolerancia Importe</th>
+                        <th>Boleto Perdido</th>
+                        <th>Importe Boleto Perdido</th>
+                        <th>Boletos Emitidos</th>
+                        <th>Boletos Controlados</th>
                         <th>Otros</th>
                         <th>Deposito</th>
+                        <th>Deposito Apps</th>
                         <th>Fecha</th>
-                        <th>Acciones</th>
+                        <th>Boleto No Utilizado</th>
+                        <th>Acción</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Las filas de entradas se agregarán aquí dinámicamente -->
-                </tbody>
+                <tbody></tbody>
             </table>
         </div>
         <div class="buttons">
-            <button type="button" class="add-row-btn" onclick="addEntry()">Añadir nueva fila</button>
-            <button type="submit">Enviar Datos</button>
+            <button type="button" onclick="addEntry()">Añadir Fila</button>
+            <button type="submit">Guardar</button>
         </div>
     </form>
 </body>

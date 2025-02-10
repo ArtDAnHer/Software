@@ -1,7 +1,7 @@
 <?php
 class Database {
-    private $db = "Boletaje";
-    private $ip = "192.168.1.17";
+    private $db = "boletaje";
+    private $ip = "192.168.1.73";
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";
@@ -39,8 +39,16 @@ class Database {
                     SUM(BEmitidos) AS BoletosEmitidos,
                     SUM(BControlados) AS BoletosControlados,
                     SUM(Deposito) AS TotalDepositos,
+                    SUM(Otros) AS TotalOtros,
                     SUM(TBoleto) AS TBoletoTotal, 
-                    SUM(TImporte) AS TImporteTotal
+                    SUM(TImporte) AS TImporteTotal,
+                    SUM(boletos_perdidos) AS BoletoPerdidoTotal,
+                    SUM(importe_boletos_perdidos) AS ImporteBoletosPerdidosTotal,
+                    AVG(boletos_perdidos) AS BoletoPerdidoAvg,
+                    SUM(importe_boletos_perdidos) AS ImporteBoletosPerdidosAvg,
+                    SUM(boletoNoUtil) AS BoletoNoUtilTotal,
+                    AVG(boletoNoUtil) AS BoletoNoUtilAvg
+                    
                 FROM boletos
                 WHERE Fecha BETWEEN :startDate AND :endDate
                 AND Estacionamiento LIKE :estacionamiento";
@@ -52,9 +60,9 @@ class Database {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    // Método para obtener todos los estacionamientos distintos
     public function getEstacionamientos() {
-        $sql = "SELECT DISTINCT Estacionamiento FROM boletos
-        s";
+        $sql = "SELECT DISTINCT estacionamiento FROM estacionamiento";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -72,8 +80,8 @@ $estacionamientos = $db->getEstacionamientos();
 $data = $db->getTotalsAndAveragesByDateRange($startDate, $endDate, $estacionamiento);
 
 // Variables para los cálculos
-$totalImportes = $data['TOImporteTotal'] + $data['TPImporteTotal'] + $data['RImporteTotal'] + $data['CImporteTotal'] + $data['TImporteTotal'];
-$totalBoletos = $data['TOBoletoTotal'] + $data['TPBoletoTotal'] + $data['RBoletosTotal'] + $data['CBoletosTotal'] + $data['TBoletoTotal'];
+$totalImportes = $data['TOImporteTotal'] + $data['TPImporteTotal'] + $data['RImporteTotal'] + $data['CImporteTotal'] + $data['TImporteTotal'] + $data['TotalOtros'] + $data['ImporteBoletosPerdidosTotal'];
+$totalBoletos = $data['TOBoletoTotal'] + $data['TPBoletoTotal'] + $data['RBoletosTotal'] + $data['CBoletosTotal'] + $data['TBoletoTotal'] + $data['BoletoPerdidoTotal'] + $data['BoletoNoUtil'];
 $totalDepositos = $data['TotalDepositos'];
 
 $promedioTOBoletoUnitario = $data['TOBoletoTotal'] > 0 ? $data['TOImporteTotal'] / $data['TOBoletoTotal'] : 0;
@@ -81,6 +89,7 @@ $promedioTPBoletoUnitario = $data['TPBoletoTotal'] > 0 ? $data['TPImporteTotal']
 $promedioRBoletoUnitario = $data['RBoletosTotal'] > 0 ? $data['RImporteTotal'] / $data['RBoletosTotal'] : 0;
 $promedioCBoletoUnitario = $data['CBoletosTotal'] > 0 ? $data['CImporteTotal'] / $data['CBoletosTotal'] : 0;
 $promedioTBoletoUnitario = $data['TBoletoTotal'] > 0 ? $data['TImporteTotal'] / $data['TBoletoTotal'] : 0;
+$promedioBoletoPerdidoUnitario = $data['BoletoPerdidoTotal'] > 0 ? $data['ImporteBoletosPerdidosTotal'] / $data['BoletoPerdidoTotal'] : 0;
 
 
 $promedioTotalBoletoUnitario = $totalBoletos > 0 ? $totalImportes / $totalBoletos : 0;
@@ -226,8 +235,8 @@ form .required {
             <select name="estacionamiento" id="estacionamiento">
                 <option value="">Todos</option>
                 <?php foreach ($estacionamientos as $est): ?>
-                    <option value="<?= htmlspecialchars($est['Estacionamiento']) ?>" <?= $estacionamiento === $est['Estacionamiento'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($est['Estacionamiento']) ?>
+                    <option value="<?= htmlspecialchars($est['estacionamiento']) ?>" <?= $estacionamiento === $est['estacionamiento'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($est['estacionamiento']) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -286,6 +295,14 @@ form .required {
             <td class="text-right"><?= number_format($data['TBoletoAvg'], 0, '.', ',') ?></td>
             <td class="text-right">$<?= number_format($data['TImporteAvg'], 2, '.', ',') ?></td>
             <td class="text-right">$<?= number_format($promedioTBoletoUnitario, 2, '.', ',') ?></td>
+        </tr>
+        <tr>
+            <td>Boletos Perdidos</td>
+            <td class="text-right"><?= number_format($data['BoletoPerdidoTotal'], 0, '.', ',') ?></td>
+            <td class="text-right">$<?= number_format($data['ImporteBoletosPerdidosTotal'], 2, '.', ',') ?></td>
+            <td class="text-right"><?= number_format($data['BoletoPerdidoAvg'], 0, '.', ',') ?></td>
+            <td class="text-right">$<?= number_format($data['ImporteBoletosPerdidosAvg'], 2, '.', ',') ?></td>
+            <td class="text-right">$<?= number_format($promedioBoletoPerdidoUnitario, 2, '.', ',') ?></td>
         </tr>
     </tbody>
 </table>
@@ -352,6 +369,22 @@ form .required {
             <td class="text-right">$<?= number_format($data['TImporteTotal'], 2, '.', ',') ?></td>
             <td class="text-right"><?= number_format(($data['TImporteTotal'] / $totalImportes) * 100, 0, '.', ',') ?>%</td>
             <td class="text-right">$<?= number_format($promedioTBoletoUnitario, 2, '.', ',') ?></td>
+        </tr>
+        <tr>
+            <th>Boletos Perdidos</th>
+            <td class="text-right"><?= number_format($data['BoletoPerdidoTotal'], 0, '.', ',') ?></td>
+            <td class="text-right"><?= number_format(($data['BoletoPerdidoTotal'] / $totalBoletos) * 100, 2, '.', ',') ?>%</td>
+            <td class="text-right">$<?= number_format($data['ImporteBoletosPerdidosTotal'], 2, '.', ',') ?></td>
+            <td class="text-right"><?= number_format(($data['ImporteBoletosPerdidosTotal'] / $totalImportes) * 100, 0, '.', ',') ?>%</td>
+            <td class="text-right">$<?= number_format($promedioBoletoPerdidoUnitario, 2, '.', ',') ?></td>
+        </tr>
+        <tr>
+            <th>Otros Importes</th>
+            <td ></td>
+            <td ></td>
+            <td class="text-right">$<?= number_format($data['TotalOtros'], 2, '.', ',') ?></td>
+            <td class="text-right">100%</td>
+            <td ></td>
         </tr>
         <tr>
             <td><strong>Total General</strong></td>
@@ -439,30 +472,34 @@ form .required {
         document.addEventListener('DOMContentLoaded', function() {
             // Datos para los gráficos de pastel
             var dataBoletos = {
-                labels: ['Tarifa ordinaria', 'Tarifa preferencial', 'Recobro', 'Cortesías', 'Tolerancia'],
+                labels: ['Tarifa ordinaria', 'Tarifa preferencial', 'Recobro', 'Cortesías', 'Tolerancia', 'Boletos perdidos', 'Boleto no util o muestra'],
                 datasets: [{
                     data: [
                         <?= $data['TOBoletoTotal'] ?>,
                         <?= $data['TPBoletoTotal'] ?>,
                         <?= $data['RBoletosTotal'] ?>,
                         <?= $data['CBoletosTotal'] ?>,
-                        <?= $data['TBoletoTotal'] ?>
+                        <?= $data['TBoletoTotal'] ?>,
+                        <?= $data['BoletoPerdidoTotal']?>
+                        <?= $data['boletoNoUtilTotal']?>
                     ],
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#E74C3C', '#34d9d7']
                 }]
             };
 
             var dataImporte = {
-                labels: ['Tarifa ordinaria', 'Tarifa preferencial', 'Recobro', 'Cortesías', 'Tolerancia'],
+                labels: ['Tarifa ordinaria', 'Tarifa preferencial', 'Recobro', 'Cortesías', 'Tolerancia', 'Boletos Perdidos'],
                 datasets: [{
                     data: [
                         <?= $data['TOImporteTotal'] ?>,
                         <?= $data['TPImporteTotal'] ?>,
                         <?= $data['RImporteTotal'] ?>,
                         <?= $data['CImporteTotal'] ?>,
-                        <?= $data['TImporteTotal'] ?>
+                        <?= $data['TImporteTotal'] ?>,
+                        <?= $data['ImporteBoletosPerdidosTotal'] ?>
+                        
                     ],
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#E74C3C']
                 }]
             };
 

@@ -37,14 +37,13 @@
         <nav>
             <ul>
                 <div style="width: 50px"></div>
-                <a href="welcome.php">
+
                     <img style="height: 40px;" src="imagenes\logo .jpg" />
-                </a>
+
             </ul>
         </nav>
         <nav align="center">
             <ul align="center">
-                <li><a href="welcome.php">Inicio</a></li>
                 <li><a href="Boletaje.php">Boletos</a></li>
             </ul>
         </nav>

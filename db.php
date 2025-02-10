@@ -1,7 +1,7 @@
 <?php
 class Database {
     private $db = "boletaje";
-    private $ip = "72.167.59.89";
+    private $ip = "192.168.1.73";
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";
@@ -13,6 +13,8 @@ class Database {
             $this->conn = new PDO($dsn, $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             return $this->conn;
+            
+            
         } catch (PDOException $e) {
             echo "Connection failed: " . $e->getMessage();
             return null;

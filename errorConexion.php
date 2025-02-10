@@ -82,6 +82,10 @@
         <h1>Error de Conexión</h1>
         <p>Lo sentimos, no pudimos establecer conexión con la base de datos. Por favor, verifica tu conexión e intenta nuevamente.</p>
         <p><a href="login.php">Volver al inicio</a></p>
+        <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+?>
     </div>
 </body>
 </html>

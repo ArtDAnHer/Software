@@ -1,7 +1,7 @@
 <?php
 class Database {
-    private $db = "Boletaje";
-    private $ip = "192.168.1.17";
+    private $db = "boletaje";
+    private $ip = "192.168.1.73";
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";
@@ -41,7 +41,9 @@ class Database {
                     SUM(BControlados) AS BoletosControlados,
                     SUM(Deposito) AS TotalDepositos,
                     SUM(TBoleto) AS TBoletoTotal, 
-                    SUM(TImporte) AS TImporteTotal
+                    SUM(TImporte) AS TImporteTotal,
+                    SUM(boletoNoUtil) AS boletoNoUtilTotal,
+                    AVG(boletoNoUtil) As boletoNoUtilAvg
                 FROM boletos
                 WHERE Fecha BETWEEN :startDate AND :endDate
                 AND (:estacionamiento = 'Todo' OR Estacionamiento LIKE :estacionamiento)
@@ -61,8 +63,9 @@ class Database {
         return $this->getTotalsAndAveragesByDateRange($prevStartDate, $prevEndDate, $estacionamiento);
     }
 
+    // Método para obtener todos los estacionamientos distintos
     public function getEstacionamientos() {
-        $sql = "SELECT DISTINCT Estacionamiento FROM boletos";
+        $sql = "SELECT DISTINCT estacionamiento FROM estacionamiento";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -91,14 +94,14 @@ $boletosPerdidosPrev = [];
 foreach ($data as $row) {
     $fechas[] = $row['Fecha'];
     $importeTotal[] = $row['TOImporteTotal'] + $row['TPImporteTotal'] + $row['RImporteTotal'] + $row['CImporteTotal'];
-    $boletajeTotal[] = $row['TOBoletoTotal'] + $row['TPBoletoTotal'] + $row['RBoletosTotal'] + $row['CBoletosTotal'];
+    $boletajeTotal[] = $row['TOBoletoTotal'] + $row['TPBoletoTotal'] + $row['RBoletosTotal'] + $row['CBoletosTotal']+ $row['TBoletoTotal'] + $row['boletoNoUtilTotal'];
     $boletosPerdidos[] = $row['BoletosEmitidos'] - $row['BoletosControlados'];
 }
 
 // Rellenar los arrays con datos del mes anterior
 foreach ($prevMonthData as $row) {
     $importeTotalPrev[] = $row['TOImporteTotal'] + $row['TPImporteTotal'] + $row['RImporteTotal'] + $row['CImporteTotal'];
-    $boletajeTotalPrev[] = $row['TOBoletoTotal'] + $row['TPBoletoTotal'] + $row['RBoletosTotal'] + $row['CBoletosTotal'];
+    $boletajeTotalPrev[] = $row['TOBoletoTotal'] + $row['TPBoletoTotal'] + $row['RBoletosTotal'] + $row['CBoletosTotal']+ $row['TBoletoTotal'] + $row['boletoNoUtilTotal'];
     $boletosPerdidosPrev[] = $row['BoletosEmitidos'] - $row['BoletosControlados'];
 }
 ?>
@@ -239,8 +242,8 @@ form .required {
         <select name="estacionamiento" id="estacionamiento" required>
             <option value="Todo" <?= ($estacionamiento === 'Todo') ? 'selected' : '' ?>>Todo</option>
             <?php foreach ($estacionamientos as $est) : ?>
-                <option value="<?= htmlspecialchars($est['Estacionamiento']) ?>" <?= ($estacionamiento === $est['Estacionamiento']) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($est['Estacionamiento']) ?>
+                <option value="<?= htmlspecialchars($est['estacionamiento']) ?>" <?= ($estacionamiento === $est['estacionamiento']) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($est['estacionamiento']) ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -259,6 +262,7 @@ form .required {
             <th>Importe Total (Anterior)</th>
             <th>Boletaje Total (Anterior)</th>
             <th>Boletos no Cobrados (Anterior)</th>
+            <th>Boleto no util y pruebas</th>
         </tr>
     </thead>
     <tbody>
@@ -271,6 +275,7 @@ form .required {
                 <td class="text-right"><?= isset($importeTotalPrev[$i]) ? htmlspecialchars($importeTotalPrev[$i]) : 'N/A' ?></td>
                 <td class="text-right"><?= isset($boletajeTotalPrev[$i]) ? htmlspecialchars($boletajeTotalPrev[$i]) : 'N/A' ?></td>
                 <td class="text-right"><?= isset($boletosPerdidosPrev[$i]) ? htmlspecialchars($boletosPerdidosPrev[$i]) : 'N/A' ?></td>
+                <td class="text-right"><?= isset($boletoNoUtil) ? htmlspecialchars($boletoNoUtil) : 'N/A' ?></td>
             </tr>
         <?php endfor; ?>
     </tbody>

@@ -16,13 +16,16 @@ if (isset($_GET['page'])) {
             $fileToInclude = 'boletaje_alta_multiples.php';
             break;
         case 'ver':
-            $fileToInclude = 'boletaje_Ver.php';
+            $fileToInclude = 'boletaje_ver.php';
             break;
         case 'alta':
             $fileToInclude = 'boletaje_alta.php';
             break;
         case 'dashboard':
             $fileToInclude = 'boletaje_dashboard.php'; // Archivo del Dashboard
+            break;
+        case 'tablas':
+            $fileToInclude = 'boletaje_deposito.php';
             break;
         default:
             $fileToInclude = 'boletaje_alta.php';
@@ -48,7 +51,7 @@ if (isset($_GET['page'])) {
     <div class="split-container">
         <!-- Sección izquierda (30%) -->
         <div class="left-section-split">
-            <h2><?php echo htmlspecialchars($_SESSION['username']); ?></h2>
+            <h3><?php echo htmlspecialchars($_SESSION['username']); ?></h3>
             <hr>
             <h4>Boletaje</h4>
             <br>
@@ -57,6 +60,7 @@ if (isset($_GET['page'])) {
             °<a href="?page=ver">Ver</a><br>
             °<a href="?page=conglomerado">Info de totales</a><br>
             °<a href="?page=dashboard">Dashboard</a><br>
+            °<a href="?page=tablas">Tabla de boletaje y depositos</a><br>
         </div>
 
         <!-- Sección derecha (70%) -->

@@ -1,7 +1,7 @@
 <?php
 class Database {
-    private $db = "Boletaje";
-    private $ip = "192.168.1.17";
+    private $db = "boletaje";
+    private $ip = "192.168.1.73";
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";
@@ -16,7 +16,6 @@ class Database {
         }
     }
 
-    // Método para obtener las entradas filtradas por rango de fechas y estacionamiento
     public function getEntries($startDate = null, $endDate = null, $estacionamiento = null) {
         $sql = "SELECT * FROM boletos";
         $params = [];
@@ -46,29 +45,20 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Método para obtener todos los estacionamientos distintos
     public function getEstacionamientos() {
-        $sql = "SELECT DISTINCT Estacionamiento FROM boletos";
+        $sql = "SELECT DISTINCT estacionamiento FROM estacionamiento";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 
-// Crear una instancia de la base de datos
 $db = new Database();
-
-// Obtener los parámetros del formulario
 $startDate = isset($_POST['startDate']) ? $_POST['startDate'] : date('Y-m-01');
 $endDate = isset($_POST['endDate']) ? $_POST['endDate'] : date('Y-m-t');
 $estacionamiento = isset($_POST['estacionamiento']) ? $_POST['estacionamiento'] : '';
-
-// Obtener los datos filtrados o todos los datos
 $data = $db->getEntries($startDate, $endDate, $estacionamiento);
-
-// Obtener todos los estacionamientos distintos
 $estacionamientos = $db->getEstacionamientos();
-
 ?>
 
 <!DOCTYPE html>
@@ -78,12 +68,6 @@ $estacionamientos = $db->getEstacionamientos();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Entradas</title>
     <style>
-        /* Añadir estilo para los gráficos */
-        
-        canvas {
-            width: 800px!important; /* Ajusta el ancho del canvas */
-            height: 800px !important; /* Ajusta la altura según sea necesario */
-        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -105,87 +89,12 @@ $estacionamientos = $db->getEstacionamientos();
         tr:hover {
             background-color: #f1f1f1;
         }
-        h2 {
-            text-align: center;
-            margin-top: 20px;
+        .text-right {
+            text-align: right;
         }
-        .form-container {
-            text-align: center;
+        form {
             margin-bottom: 20px;
         }
-        .form-container label {
-            margin-right: 10px;
-        }
-
-        /* style.css */
-
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
-}
-
-h2 {
-    text-align: center;
-    margin-top: 20px;
-}
-
-form {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-}
-
-form label {
-    font-weight: bold;
-    margin-bottom: 5px;
-    display: block;
-}
-
-form input[type="text"],
-form input[type="number"],
-form select {
-    width: calc(100% - 22px);
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-form input[type="number"] {
-    text-align: right;
-}
-
-form button {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-form button:hover {
-    background-color: #218838;
-}
-
-form hr {
-    border: 0;
-    border-top: 1px solid #ddd;
-    margin: 20px 0;
-}
-
-form .required {
-    color: red;
-    font-size: 0.9em;
-}
-
     </style>
 </head>
 <body>
@@ -193,78 +102,83 @@ form .required {
     <hr>
 
     <form method="POST" action="">
-    <label for="startDate">Seleccione la fecha de inicio:</label>
+        <label for="startDate">Fecha de inicio:</label>
         <input type="date" name="startDate" id="startDate" value="<?= htmlspecialchars($startDate) ?>" required>
 
-        <label for="endDate">Seleccione la fecha de fin:</label>
+        <label for="endDate">Fecha de fin:</label>
         <input type="date" name="endDate" id="endDate" value="<?= htmlspecialchars($endDate) ?>" required>
 
-        <label for="estacionamiento">Seleccione un estacionamiento:</label>
+        <label for="estacionamiento">Estacionamiento:</label>
         <select name="estacionamiento" id="estacionamiento">
             <option value="">Todos</option>
             <?php foreach ($estacionamientos as $est): ?>
-                <option value="<?= htmlspecialchars($est['Estacionamiento']) ?>" <?= $estacionamiento === $est['Estacionamiento'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($est['Estacionamiento']) ?>
+                <option value="<?= htmlspecialchars($est['estacionamiento']) ?>" <?= $estacionamiento === $est['estacionamiento'] ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($est['estacionamiento']) ?>
                 </option>
             <?php endforeach; ?>
         </select>
 
         <button type="submit">Filtrar</button>
-        <a href="excel.php" >Descargar excel</a>
+    </form>
+
+    <form method="POST" action="exportar_excel.php">
+        <input type="hidden" name="startDate" value="<?= htmlspecialchars($startDate) ?>">
+        <input type="hidden" name="endDate" value="<?= htmlspecialchars($endDate) ?>">
+        <input type="hidden" name="estacionamiento" value="<?= htmlspecialchars($estacionamiento) ?>">
+        <button type="submit">Exportar a Excel</button>
     </form>
 
     <table>
-    <thead>
-        <tr>
-            <th>Fecha</th>
-            <th>Tarifa ordinaria boleto</th>
-            <th>Tarifa ordinaria importe</th>
-            <th>Tarifa preferencial boleto</th>
-            <th>Tarifa preferencial importe</th>
-            <th>Recobro boletos</th>
-            <th>Recobro importe</th>
-            <th>CBoletos</th>
-            <th>CImporte</th>
-            <th>Boletos emitidos</th>
-            <th>Boletos controlados</th>
-            <th>Otros</th>
-            <th>Deposito</th>
-            <th>Estacionamiento</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php if (!empty($data)): ?>
-            <?php foreach ($data as $row): ?>
-                <tr>
-                    <td><?= htmlspecialchars($row['Fecha']) ?></td>
-                    <td class="text-right"><?= number_format($row['TOBoleto'], 0, ',', '.') ?></td>
-                    <td class="text-right">$<?= number_format($row['TOImporte'], 2, ',', '.') ?></td>
-                    <td class="text-right"><?= number_format($row['TPBoleto'], 0, ',', '.') ?></td>
-                    <td class="text-right">$<?= number_format($row['TPImporte'], 2, ',', '.') ?></td>
-                    <td class="text-right"><?= number_format($row['RBoletos'], 0, ',', '.') ?></td>
-                    <td class="text-right">$<?= number_format($row['RImporte'], 2, ',', '.') ?></td>
-                    <td class="text-right"><?= number_format($row['CBoletos'], 0, ',', '.') ?></td>
-                    <td class="text-right">$<?= number_format($row['CImporte'], 2, ',', '.') ?></td>
-                    <td class="text-right"><?= number_format($row['BEmitidos'], 0, ',', '.') ?></td>
-                    <td class="text-right"><?= number_format($row['BControlados'], 0, ',', '.') ?></td>
-                    <td class="text-right"><?= number_format($row['Otros'], 0, ',', '.') ?></td>
-                    <td class="text-right">$<?= number_format($row['Deposito'], 2, ',', '.') ?></td>
-                    <td><?= htmlspecialchars($row['Estacionamiento']) ?></td>
-                </tr>
-            <?php endforeach; ?>
-        <?php else: ?>
+        <thead>
             <tr>
-                <td colspan="14">No hay datos disponibles para el rango seleccionado.</td>
+                <th>Fecha</th>
+                <th>Estacionamiento</th>
+                <th>Tarifa Ordinaria Boletos</th>
+                <th>Tarifa Ordinaria Importe</th>
+                <th>Tarifa Preferencial Boletos</th>
+                <th>Tarifa Preferencial Importe</th>
+                <th>Recobro Boletos</th>
+                <th>Recobro Importe</th>
+                <th>Cortesía Boletos</th>
+                <th>Cortesía Importe</th>
+                <th>Boletos Perdidos</th>
+                <th>Boletos Perdidos Importe</th>
+                <th>Boletos Emitidos</th>
+                <th>Boletos Controlados</th>
+                <th>Otros Importes</th>
+                <th>Total</th>
+                <th>Depósito</th>
             </tr>
-        <?php endif; ?>
-    </tbody>
-</table>
-
-<style>
-    .text-right {
-        text-align: right;
-    }
-</style>
-
+        </thead>
+        <tbody>
+            <?php if (!empty($data)): ?>
+                <?php foreach ($data as $row): ?>
+                    <tr>
+                        <td><?= date("d/m/Y", strtotime($row['Fecha'])) ?></td>
+                        <td><?= htmlspecialchars($row['Estacionamiento']) ?></td>
+                        <td class="text-right"><?= number_format($row['TOBoleto'], 0, '.', ',') ?></td>
+                        <td class="text-right">$<?= number_format($row['TOImporte'], 2, '.', ',') ?></td>
+                        <td class="text-right"><?= number_format($row['TPBoleto'], 0, '.', ',') ?></td>
+                        <td class="text-right">$<?= number_format($row['TPImporte'], 2, '.', ',') ?></td>
+                        <td class="text-right"><?= number_format($row['RBoletos'], 0, '.', ',') ?></td>
+                        <td class="text-right">$<?= number_format($row['RImporte'], 2, '.', ',') ?></td>
+                        <td class="text-right"><?= number_format($row['CBoletos'], 0, '.', ',') ?></td>
+                        <td class="text-right">$<?= number_format($row['CImporte'], 2, '.', ',') ?></td>
+                        <td class="text-right"><?= number_format($row['boletos_perdidos'], 0, '.', ',') ?></td>
+                        <td class="text-right">$<?= number_format($row['importe_boletos_perdidos'], 2, '.', ',') ?></td>
+                        <td class="text-right"><?= number_format($row['BEmitidos'], 0, '.', ',') ?></td>
+                        <td class="text-right"><?= number_format($row['BControlados'], 0, '.', ',') ?></td>
+                        <td class="text-right">$<?= number_format($row['Otros'], 2, '.', ',') ?></td>
+                        <td class="text-right">$<?= number_format($row['TOImporte'] + $row['TPImporte'] + $row['RImporte'] + $row['CImporte'] + $row['Otros'], 2, '.', ',') ?></td>
+                        <td class="text-right">$<?= number_format($row['Deposito'], 2, '.', ',') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="17">No hay datos disponibles para el rango seleccionado.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </body>
 </html>

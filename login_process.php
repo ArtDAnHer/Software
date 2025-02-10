@@ -17,11 +17,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if ($stmt->rowCount() == 1) {
             $_SESSION['username'] = $username;
-            header("Location: welcome.php");
+            header("Location: Boletaje.php");
             exit();
         } else {
             $_SESSION['username'] = $username;
-            header("Location: Usuario.php");
+            header("Location: usuario.php");
             exit(); // Importante para detener la ejecución después de la redirección
         }
     } else {
