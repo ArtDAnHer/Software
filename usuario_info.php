@@ -1,7 +1,12 @@
 <?php
 class Database {
+<<<<<<< HEAD
     private $db = "boletaje";
     private $ip = "192.168.1.98";
+=======
+    private $db = "reportes_fallas";
+    private $ip = "localhost";
+>>>>>>> a5e7407534ffde80b3f3d9375184a9bfd5db5ebb
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";
@@ -16,20 +21,62 @@ class Database {
         }
     }
 
-    // Método para obtener los datos de la tabla usuarios_empresa
-    public function getFirstUser() {
-        $sql = "SELECT nombre, email, telefono, direccion, fecha_registro, rol, estado, fecha_nacimiento, departamento FROM usuarios_empresa LIMIT 1";
+    public function getIncidencias($tecnico = null, $lugar = null, $estado = null, $fechaInicio = null, $fechaFin = null, $area = null) {
+        $sql = "SELECT * FROM incidencias WHERE 1=1";
+        $params = [];
+
+        if ($tecnico) {
+            $sql .= " AND tecnico = :tecnico";
+            $params[':tecnico'] = $tecnico;
+        }
+
+        if ($lugar) {
+            $sql .= " AND lugar = :lugar";
+            $params[':lugar'] = $lugar;
+        }
+
+        if ($estado) {
+            $sql .= " AND estado = :estado";
+            $params[':estado'] = $estado;
+        }
+
+        if ($fechaInicio && $fechaFin) {
+            $sql .= " AND fecha_reporte BETWEEN :fechaInicio AND :fechaFin";
+            $params[':fechaInicio'] = $fechaInicio;
+            $params[':fechaFin'] = $fechaFin;
+        }
+
+        if ($area) {
+            $sql .= " AND area = :area";
+            $params[':area'] = $area;
+        }
+
         $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC); // Devuelve solo una fila
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getUniqueValues($column) {
+        $sql = "SELECT DISTINCT $column FROM incidencias";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 }
 
-// Crear una instancia de la clase Database
 $db = new Database();
+$tecnicos = $db->getUniqueValues('tecnico');
+$lugares = $db->getUniqueValues('lugar');
+$estados = $db->getUniqueValues('estado');
+$areas = $db->getUniqueValues('area');
 
-// Obtener el primer usuario
-$usuario = $db->getFirstUser();
+$incidencias = $db->getIncidencias(
+    $_GET['tecnico'] ?? null,
+    $_GET['lugar'] ?? null,
+    $_GET['estado'] ?? null,
+    $_GET['fecha_inicio'] ?? null,
+    $_GET['fecha_fin'] ?? null,
+    $_GET['area'] ?? null
+);
 ?>
 
 <!DOCTYPE html>
@@ -37,113 +84,234 @@ $usuario = $db->getFirstUser();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Información del Usuario</title>
-    <link rel="stylesheet" href="style.css"> <!-- Vincula tu archivo CSS -->
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-
-        h2 {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        form {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-        }
-
-        form label {
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        form input[type="text"],
-        form input[type="number"],
-        form select {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        form input[type="number"] {
-            text-align: right;
-        }
-
-        form button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        form button:hover {
-            background-color: #218838;
-        }
-
-        form hr {
-            border: 0;
-            border-top: 1px solid #ddd;
-            margin: 20px 0;
-        }
-
-        form .required {
-            color: red;
-            font-size: 0.9em;
-        }
-    </style>
+    <title>Lista de Incidencias</title>
 </head>
-<body>
-    <h2><?php echo $usuario['nombre']; ?></h2>
-    <hr>
-        <div class="container">
-                <div class="row" align="center" style="font-size: 25px">
-                        <div class="col-xs-12 col-sm-4"></div>
-                        <div class="col-xs-12 col-sm-4" >
-                                <div align="center" class="info">
-                                        <th>Email: </th>
-                                        <td><?php echo $usuario['email']; ?></td>
-                                <br><br>
-                                        <th>Teléfono: </th>
-                                        <td><?php echo $usuario['telefono']; ?></td>
-                                <br><br>
-                                        <th>Dirección: </th>
-                                        <td><?php echo $usuario['direccion']; ?></td>
-                                <br><br>
-                                        <th>Fecha de Registro: </th>
-                                        <td><?php echo $usuario['fecha_registro']; ?></td>
-                                <br><br>
-                                        <th>Rol: </th>
-                                        <td><?php echo $usuario['rol']; ?></td>
-                                <br><br>
-                                        <th>Estado: </th>
-                                        <td><?php echo $usuario['estado']; ?></td>
-                                <br><br>
-                                        <th>Fecha de Nacimiento: </th>
-                                        <td><?php echo $usuario['fecha_nacimiento']; ?></td>
-                                <br><br>
-                                        <th>Departamento: </th>
-                                        <td><?php echo $usuario['departamento']; ?></td>
-                                        </div>
-                                </div>
-                        <div class="col-xs-12 col-sm-4"></div>
-                </div>
-        </div>
 
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+    }
+
+    h2 {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .mensaje {
+        text-align: center;
+        color: green;
+        margin: 10px 0;
+    }
+
+    form {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+    }
+
+    form label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    form input[type="text"],
+    form textarea {
+        width: calc(100% - 22px);
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    form textarea {
+        height: 100px;
+    }
+
+    form button {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    form button:hover {
+        background-color: #218838;
+    }
+
+    form select {
+        width: calc(100% - 22px);
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    table {
+        width: 80%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    table th, table td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+
+    table th {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .estado-cerrado {
+        background-color: red;
+        color: white;
+    }
+
+    .estado-fallando {
+        background-color: yellow;
+        color: black;
+    }
+
+    .estado-funcionando {
+        background-color: green;
+        color: white;
+    }
+</style>
+
+<body>
+    <h2>Filtrar Incidencias</h2>
+    <form method="GET">
+        <label for="tecnico">Técnico:</label>
+        <select name="tecnico">
+            <option value="">Todos</option>
+            <?php foreach ($tecnicos as $tecnico): ?>
+                <option value="<?php echo $tecnico; ?>"><?php echo $tecnico; ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="lugar">Lugar:</label>
+        <select name="lugar">
+            <option value="">Todos</option>
+            <?php foreach ($lugares as $lugar): ?>
+                <option value="<?php echo $lugar; ?>"><?php echo $lugar; ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="estado">Estado:</label>
+        <select name="estado">
+            <option value="">Todos</option>
+            <?php foreach ($estados as $estado): ?>
+                <option value="<?php echo $estado; ?>"><?php echo $estado; ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="area">Área:</label>
+        <select name="area">
+            <option value="">Todas</option>
+            <?php foreach ($areas as $area): ?>
+                <option value="<?php echo $area; ?>"><?php echo $area; ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <label for="fecha_inicio">Fecha Inicio:</label>
+        <input type="date" name="fecha_inicio">
+        <br>
+        <br>
+        <label for="fecha_fin">Fecha Fin:</label>
+        <input type="date" name="fecha_fin">
+        <br>
+        <br>
+        <button type="submit">Buscar</button>
+    </form>
+
+    
+    <h2>Lista de Incidencias</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fecha Reporte</th>
+                <th>Quien Reporta</th>
+                <th>Tipo</th>
+                <th>Lugar</th>
+                <th>Equipo</th>
+                <th>Descripción</th>
+                <th>Operando</th>
+                <th>Imagen</th>
+                <th>Reincidencia</th>
+                <th>Incidencia Relacionada</th>
+                <th>Estado</th>
+                <th>Área</th>
+                <th>Técnico</th>
+                <th>Diagnóstico</th>
+                <th>Requiere Piezas</th>
+                <th>Detalle Piezas Requeridas</th>
+                <th>Refacción Adicional 1</th>
+                <th>Refacción Adicional 2</th>
+                <th>Foto Evidencia Atención</th>
+                <th>Fecha Atención</th>
+                <th>Atendido</th>
+                <th>Firma</th>
+                <th>File</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($incidencias as $incidencia): ?>
+                <tr>
+                    <td><?php echo $incidencia['id']; ?></td>
+                    <td><?php echo $incidencia['fecha_reporte']; ?></td>
+                    <td><?php echo $incidencia['quien_reporta']; ?></td>
+                    <td><?php echo $incidencia['tipo']; ?></td>
+                    <td><?php echo $incidencia['lugar']; ?></td>
+                    <td><?php echo $incidencia['equipo']; ?></td>
+                    <td><?php echo $incidencia['descripcion']; ?></td>
+                    <td><?php echo $incidencia['operando'] ? 'Sí' : 'No'; ?></td>
+                    <td><a href= <?php echo $incidencia['imagen']; ?>><?php echo $incidencia['imagen']; ?></a></td>
+                    <td><?php echo $incidencia['reincidencia'] ? 'Sí' : 'No'; ?></td>
+                    <td><?php echo $incidencia['incidencia_relacionada']; ?></td>
+
+                    <!-- Aplicar color al estado -->
+                    <td class="<?php 
+                        if ($incidencia['estado'] == 'Cerrado') {
+                            echo 'estado-cerrado';
+                        } elseif ($incidencia['estado'] == 'Funcional') {
+                            echo 'estado-fallando';
+                        } elseif ($incidencia['estado'] == 'Activo') {
+                            echo 'estado-funcionando';
+                        } ?>">
+                        <?php echo $incidencia['estado']; ?>
+                    </td>
+
+                    <td><?php echo $incidencia['area']; ?></td>
+                    <td><?php echo $incidencia['tecnico']; ?></td>
+                    <td><?php echo $incidencia['diagnostico']; ?></td>
+                    <td><?php echo $incidencia['requiere_piezas'] ? 'Sí' : 'No'; ?></td>
+                    <td><?php echo $incidencia['detalle_piezas_requeridas']; ?></td>
+                    <td><?php echo $incidencia['refaccion_adicional_1']; ?></td>
+                    <td><?php echo $incidencia['refaccion_adicional_2']; ?></td>
+                    <td><?php echo $incidencia['foto_evidencia_atencion']; ?></td>
+                    <td><?php echo $incidencia['fecha_atencion']; ?></td>
+                    <td><?php echo $incidencia['atendido'] ? 'Sí' : 'No'; ?></td>
+                    <td><?php echo $incidencia['firma']; ?></td>
+                    <td><button onclick="window.location.href='visualizar.php?id=<?php echo $incidencia['id']; ?>'">Visualizar</button></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
 </body>
 </html>

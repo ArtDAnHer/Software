@@ -1,11 +1,17 @@
 <?php
 class Database {
+<<<<<<< HEAD
     private $db = "boletaje";
     private $ip = "192.168.1.98";
+=======
+    private $db = "reportes_fallas";
+    private $ip = "localhost";
+>>>>>>> a5e7407534ffde80b3f3d9375184a9bfd5db5ebb
     private $port = "3306";
     private $username = "celular";
     private $password = "Coemsa.2024";
     private $conn;
+
 
     public function __construct() {
         try {
@@ -17,33 +23,40 @@ class Database {
     }
 
     public function insertPlaza($data) {
-        $sql = "INSERT INTO estacionamiento (id, estacionamiento, direccion) VALUES (:id, :estacionamiento, :direccion)";
+        $sql = "INSERT INTO estacionamiento (nombre, direccion) VALUES (:nombre, :direccion)";
         $stmt = $this->conn->prepare($sql);
 
-        // Enlazar los parámetros con los valores del array $data
-        $stmt->bindParam(':id', $data['id']);
-        $stmt->bindParam(':estacionamiento', $data['estacionamiento']);
+        $stmt->bindParam(':nombre', $data['nombre']);
         $stmt->bindParam(':direccion', $data['direccion']);
 
-        if ($stmt->execute()) {
-            echo "Plaza registrada exitosamente.";
-        } else {
-            echo "Error al registrar la plaza.";
-        }
+        return $stmt->execute();
+    }
+
+    public function getPlazas() {
+        $sql = "SELECT * FROM estacionamiento";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 
-// Manejo del formulario
+$mensaje = '';
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
-        'id' => $_POST['id'],
-        'estacionamiento' => $_POST['estacionamiento'],
+        'nombre' => $_POST['estacionamiento'],
         'direccion' => $_POST['direccion']
     ];
 
     $db = new Database();
-    $db->insertPlaza($data);
+    if ($db->insertPlaza($data)) {
+        $mensaje = "Estacionamiento registrado exitosamente.";
+    } else {
+        $mensaje = "Error al registrar el estacionamiento.";
+    }
 }
+
+$db = new Database();
+$plazas = $db->getPlazas(); // Obtener las plazas registradas
 ?>
 
 <!DOCTYPE html>
@@ -65,6 +78,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin-top: 20px;
         }
 
+        .mensaje {
+            text-align: center;
+            color: green;
+            margin: 10px 0;
+        }
+
         form {
             background-color: #fff;
             border-radius: 8px;
@@ -80,8 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             display: block;
         }
 
-        form input[type="text"],
-        form input[type="number"] {
+        form input[type="text"] {
             width: calc(100% - 22px);
             padding: 10px;
             margin-bottom: 15px;
@@ -103,15 +121,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         form button:hover {
             background-color: #218838;
         }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #28a745;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <h2>Alta de Plaza</h2>
     <hr>
-    <form method="POST" action="">
-        <label for="id">ID</label>
-        <input type="number" name="id" id="id" required><br>
+    
+    <?php if ($mensaje): ?>
+        <div class="mensaje"><?php echo $mensaje; ?></div>
+    <?php endif; ?>
 
+    <form method="POST" action="">
         <label for="estacionamiento">Nombre del Estacionamiento</label>
         <input type="text" name="estacionamiento" id="estacionamiento" required><br>
 
@@ -120,5 +160,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <button type="submit">Registrar Plaza</button>
     </form>
- </body>
+
+    <!-- Sección para mostrar la tabla de plazas -->
+    <h2>Plazas Registradas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Dirección</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($plazas): ?>
+                <?php foreach ($plazas as $plaza): ?>
+                    <tr>
+                        <td><?php echo $plaza['nombre']; ?></td>
+                        <td><?php echo $plaza['direccion']; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="3">No hay plazas registradas.</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</body>
 </html>
