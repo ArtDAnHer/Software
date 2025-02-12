@@ -1,6 +1,6 @@
 <?php
 // Configuración de la conexión a la base de datos
-$servername = "192.168.1.73";
+$servername = "192.168.1.98";
 $username = "celular";
 $password = "Coemsa.2024";
 $dbname = "boletaje";

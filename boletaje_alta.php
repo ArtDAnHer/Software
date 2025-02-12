@@ -1,10 +1,9 @@
 <?php
 // Configuración e la conexión a la base de datos
-$servername = "192.168.1.73";
+$servername = "192.168.1.98";
 $username = "celular";
 $password = "Coemsa.2024";
 $dbname = "boletaje";
-
 try {
     // Conexión a MySQL usando PDO
     $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
