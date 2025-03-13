@@ -18,7 +18,7 @@ class Database {
         }
     }
 
-    public function getTotalsByDateRangeAndEstacionamiento($startDate, $endDate) {
+    public function getTotalsByDate($date) {
         $sql = "
             SELECT 
                 Estacionamiento,
@@ -39,15 +39,16 @@ class Database {
                 SUM(TOImporte) AS total_toimporte,
                 SUM(TOBoleto) AS total_toboleto,
                 SUM(apps) AS total_apps,
-                SUM(boletoNoUtil) AS total_no_util
+                SUM(boletoNoUtil) AS total_no_util,
+                SUM(penciones_cantidad) AS total_penciones,
+                SUM(penciones_importe) AS total_importe_penciones
             FROM boletos
-            WHERE Fecha BETWEEN :startDate AND :endDate
+            WHERE Fecha = :date
             GROUP BY Estacionamiento
         ";
 
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':startDate', $startDate);
-        $stmt->bindParam(':endDate', $endDate);
+        $stmt->bindParam(':date', $date);
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -58,24 +59,19 @@ class Database {
 $db = new Database();
 
 $totals = [];
-$startDate = $_POST['startDate'] ?? '';
-$endDate = $_POST['endDate'] ?? '';
+$date = $_POST['date'] ?? '';
 $boletajeTotal = [];
 $importeTotal = [];
 $importeappTotal = [];
 $diferencia = [];
 $diferenciaImporte = [];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $startDate && $endDate) {
-    $totals = $db->getTotalsByDateRangeAndEstacionamiento($startDate, $endDate);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $date) {
+    $totals = $db->getTotalsByDate($date);
 
     foreach ($totals as $key => $row) {
-        $importeTotal[$key] = ((float)($row['total_tpimporte'] ?? 0))  
-                            + ((float)($row['total_toimporte'] ?? 0)) 
-                            + ((float)($row['total_cimporte'] ?? 0)) 
-                            + ((float)($row['total_importe_boletos_perdidos'] ?? 0));
-
-        $importeappTotal[$key] = ((float)($row['total_apps'] ?? 0)) + ((float)($row['total_deposito'] ?? 0));
+        $importeTotal[$key] = $row['total_tpimporte'] + $row['total_toimporte'] + $row['total_cimporte'] + $row['total_importe_boletos_perdidos'];
+        $importeappTotal[$key] = ((float)($row['total_apps'] ?? 0)) + $importeTotal[$key];
 
         $boletajeTotal[$key] = ((int)($row['total_tpboleto'] ?? 0))
                              + ((int)($row['total_toboleto'] ?? 0))
@@ -83,9 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $startDate && $endDate) {
                              + ((int)($row['total_boletos_perdidos'] ?? 0))
                              + ((int)($row['total_no_util'] ?? 0));
 
-        $diferencia[$key] = ((int)($row['total_bemitidos'] ?? 0)) - $boletajeTotal[$key];
+        $diferencia[$key] = ((int)($row['total_bemitidos'] ?? 0)) - $boletajeTotal[$key] ;
 
-        $diferenciaImporte[$key] = $importeTotal[$key] - $importeappTotal[$key];
+        $diferenciaImporte[$key] = ((float)($row['total_deposito'] ?? 0)) - $importeappTotal[$key] ;
     }
 }
 
@@ -96,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $startDate && $endDate) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Totales y Promedios por Rango de Fechas</title>
+    <title>Totales y Promedios por Fecha</title>
     <style>
         canvas {
             width: 800px!important;
@@ -134,6 +130,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $startDate && $endDate) {
         .form-container label {
             margin-right: 10px;
         }
+        td.numeric {
+            text-align: right;
+        }
     </style>
 </head>
 <body>
@@ -143,17 +142,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $startDate && $endDate) {
 
 <div class="form-container">
     <form method="POST" action="">
-        <label for="startDate">Seleccione la fecha de inicio:</label>
-        <input type="date" name="startDate" id="startDate" value="<?= htmlspecialchars($startDate) ?>" required>
-
-        <label for="endDate">Seleccione la fecha de fin:</label>
-        <input type="date" name="endDate" id="endDate" value="<?= htmlspecialchars($endDate) ?>" required>
+        <label for="date">Seleccione la fecha:</label>
+        <input type="date" name="date" id="date" value="<?= htmlspecialchars($date) ?>" required>
 
         <button type="submit">Filtrar</button>
     </form>
 </div>
 <br>
 <div class="table-title">Boletaje</div>
+<form method="POST" action="exportar_filtrado_excel.php">
+    <input type="hidden" name="date" value="<?= htmlspecialchars($date) ?>">
+    <button type="submit">Exportar a Excel</button>
+</form>
+
 <table>
     <thead>
         <tr>
@@ -173,19 +174,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $startDate && $endDate) {
             <?php foreach ($totals as $key => $row): ?>
                 <tr>
                     <td><?= htmlspecialchars($row['Estacionamiento']) ?></td>
-                    <td><?= htmlspecialchars($row['total_tpboleto'] ?? 0) ?></td>
-                    <td><?= htmlspecialchars($row['total_toboleto'] ?? 0) ?></td>
-                    <td><?= htmlspecialchars($row['total_cboletos'] ?? 0) ?></td>
-                    <td><?= htmlspecialchars($row['total_boletos_perdidos'] ?? 0) ?></td>
-                    <td><?= htmlspecialchars($row['total_no_util'] ?? 0) ?></td>
-                    <td><?= htmlspecialchars($boletajeTotal[$key] ?? 0) ?></td>
-                    <td><?= htmlspecialchars($row['total_bemitidos'] ?? 0) ?></td>
-                    <td><?= htmlspecialchars($diferencia[$key] ?? 0) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_tpboleto'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_toboleto'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_cboletos'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_boletos_perdidos'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_no_util'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($boletajeTotal[$key] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_bemitidos'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($diferencia[$key] ?? 0, 2, '.', ',')) ?></td>
                 </tr>
             <?php endforeach; ?>
         <?php else: ?>
             <tr>
-                <td colspan="9">No se encontraron datos para el rango de fechas seleccionado.</td>
+                <td colspan="9">No se encontraron datos para la fecha seleccionada.</td>
             </tr>
         <?php endif; ?>
     </tbody>
@@ -212,20 +213,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $startDate && $endDate) {
             <?php foreach ($totals as $key => $row): ?>
                 <tr>
                     <td><?= htmlspecialchars($row['Estacionamiento']) ?></td>
-                    <td>$<?= htmlspecialchars(number_format($row['total_tpimporte'] ?? 0, 2)) ?></td>
-                    <td>$<?= htmlspecialchars(number_format($row['total_toimporte'] ?? 0, 2)) ?></td>
-                    <td>$<?= htmlspecialchars(number_format($row['total_cimporte'] ?? 0, 2)) ?></td>
-                    <td>$<?= htmlspecialchars(number_format($row['total_importe_boletos_perdidos'] ?? 0, 2)) ?></td>
-                    <td>$<?= htmlspecialchars(number_format($importeTotal[$key] ?? 0, 2)) ?></td>
-                    <td>$<?= htmlspecialchars(number_format($row['total_apps'] ?? 0, 2)) ?></td>
-                    <td>$<?= htmlspecialchars(number_format($row['total_deposito'] ?? 0, 2)) ?></td>
-                    <td>$<?= htmlspecialchars(number_format($importeappTotal[$key] ?? 0, 2)) ?></td>
-                    <td>$<?= htmlspecialchars(number_format($diferenciaImporte[$key] ?? 0, 2)) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_tpimporte'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_toimporte'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_importe_boletos_perdidos'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_otros'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($importeTotal[$key] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_apps'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($row['total_deposito'] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($importeappTotal[$key] ?? 0, 2, '.', ',')) ?></td>
+                    <td class="numeric"><?= htmlspecialchars(number_format($diferenciaImporte[$key] ?? 0, 2, '.', ',')) ?></td>
                 </tr>
             <?php endforeach; ?>
         <?php else: ?>
             <tr>
-                <td colspan="10">No se encontraron datos para el rango de fechas seleccionado.</td>
+                <td colspan="10">No se encontraron datos para la fecha seleccionada.</td>
             </tr>
         <?php endif; ?>
     </tbody>

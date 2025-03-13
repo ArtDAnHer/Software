@@ -22,18 +22,14 @@ try {
             // Preparar la consulta SQL
             $stmt = $conn->prepare("INSERT INTO boletos (
                 Fecha, Turno, TOBoleto, TOImporte, TPBoleto, TPImporte, RBoletos, RImporte, CBoletos, CImporte, 
-                TBoleto, TImporte, BEmitidos, BControlados, Otros, Deposito, Estacionamiento, boletos_perdidos, importe_boletos_perdidos, boletoNoUtil, apps
+                TBoleto, TImporte, BEmitidos, BControlados, Otros, Deposito, Estacionamiento, boletos_perdidos, importe_boletos_perdidos, boletoNoUtil, apps, penciones_cantidad, penciones_importe
             ) VALUES (
                 :Fecha, :Turno, :TOBoleto, :TOImporte, :TPBoleto, :TPImporte, :RBoletos, :RImporte, :CBoletos, :CImporte, 
-                :TBoleto, :TImporte, :BEmitidos, :BControlados, :Otros, :Deposito, :Estacionamiento, :BoletoPerdido, :ImporteBoletoPerdido, :boletoNoUtil, :apps
+                :TBoleto, :TImporte, :BEmitidos, :BControlados, :Otros, :Deposito, :Estacionamiento, :BoletoPerdido, :ImporteBoletoPerdido, :boletoNoUtil, :apps, :penciones_cantidad, :penciones_importe
             )");
 
             foreach ($entries as $entry) {
-                $entry = array_map('trim', $entry); // Eliminar espacios en blanco alrededor de los datos
-                
-                // Asegurarse de que el campo 'apps' exista en cada entrada, si no, establecerlo a 0
-                $apps = isset($entry['apps']) ? $entry['apps'] : 0;
-
+                $entry = array_map('trim', $entry);
                 // Ejecutar la consulta con los parámetros correctos
                 $stmt->execute([
                     ':Fecha' => $entry['Fecha'],
@@ -56,7 +52,9 @@ try {
                     ':BoletoPerdido' => $entry['BoletoPerdido'],
                     ':ImporteBoletoPerdido' => $entry['ImporteBoletoPerdido'],
                     ':boletoNoUtil' => $entry['boletoNoUtil'],
-                    ':apps' => $apps
+                    ':apps' => $entry['apps'],
+                    ':penciones_cantidad' => $entry['penciones_cantidad'],
+                    ':penciones_importe' => $entry['penciones_importe']
                 ]);
             }
             echo "<script>alert('Entradas guardadas correctamente.');</script>";
@@ -124,9 +122,11 @@ $conn = null;
                 <td><input type="number" name="entries[${rowCount}][BControlados]" required></td>
                 <td><input type="number" name="entries[${rowCount}][Otros]" required></td>
                 <td><input type="number" step="0.01" name="entries[${rowCount}][Deposito]" required></td>
-                <td><input type="number" step="0.01" name="entries[${rowCount}][apps]" required></td>
                 <td><input type="date" name="entries[${rowCount}][Fecha]" required value="<?= date('Y-m-d') ?>"></td>
                 <td><input type="number" step="0.01" name="entries[${rowCount}][boletoNoUtil]" required></td>
+                <td><input type="number" step="0.01" name="entries[${rowCount}][apps]" required></td>
+                <td><input type="number" step="0.01" name="entries[${rowCount}][penciones_cantidad]" required></td>
+                <td><input type="number" step="0.01" name="entries[${rowCount}][penciones_importe]" required></td>
                 <td><button type="button" onclick="deleteRow(this)">Eliminar</button></td>
             `;
         }
@@ -139,11 +139,11 @@ $conn = null;
 <body>
     <h2>Crear Nuevas Entradas</h2>
     
-    <h2>Centro Republica del Salvador</h2><br>
-    ordinario = autos<br>
-    preferencial = camionetas<br>
-    recobros = motos<br>
-    tolerancia = hotel<br>
+     <h2>Centro Republica del salvador</h2><br>
+                ordinario = autos<br>
+                preferencial = camionetas<br>
+                recobros = motos<br>
+                tolerancia = hotel<br>
 
     <form method="POST" onsubmit="confirmSubmission(event)">
         <div class="form-container">
@@ -152,25 +152,27 @@ $conn = null;
                     <tr>
                         <th>Estacionamiento</th>
                         <th>Turno</th>
-                        <th>Tiempo Ordinario Boleto</th>
-                        <th>Tiempo Ordinario Importe</th>
-                        <th>Tiempo Preferencial Boleto</th>
+                        <th>Tiempo iOrdinarioempo  rdinario Boleto</th>
+                        <th>Tiempo iOrdinarioempo  rdinario Importe</th>
+                        <th>Tiempo iempo Preferencial Boleto</th>
                         <th>Tiempo Preferencial Importe</th>
                         <th>Recobro Boletos</th>
                         <th>Recobro Importe</th>
-                        <th>Cortecía Boletos</th>
-                        <th>Cortecía Importe</th>
+                        <th>Cortecia Boletos</th>
+                        <th>Cortecia Importe</th>
                         <th>Tolerancia Boleto</th>
                         <th>Tolerancia Importe</th>
                         <th>Boleto Perdido</th>
                         <th>Importe Boleto Perdido</th>
                         <th>Boletos Emitidos</th>
-                        <th>Boletos Controlados</th>
+                        <th>BoletosControlados</th>
                         <th>Otros</th>
                         <th>Deposito</th>
-                        <th>Deposito Apps</th>
                         <th>Fecha</th>
-                        <th>Boleto No Utilizado</th>
+                        <th>BoletoNoUtil</th>
+                        <th>App</th>
+                        <th>Cantidad de penciones</th>
+                        <th>Importe de penciones</th>
                         <th>Acción</th>
                     </tr>
                 </thead>

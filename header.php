@@ -44,13 +44,7 @@
         </nav>
         <nav align="center">
             <ul align="center">
-<<<<<<< HEAD
                 <li><a href="Boletaje.php">Boletos</a></li>
-=======
-                <li><a href="welcome.php">Inicio</a></li>
-                <li><a href="incidencias.php">Incidencias</a></li>
-                <li><a href="dashboards.php">Dashboards</a></li>
->>>>>>> a5e7407534ffde80b3f3d9375184a9bfd5db5ebb
             </ul>
         </nav>
         <nav align="right">

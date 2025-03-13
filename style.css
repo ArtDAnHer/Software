@@ -10,7 +10,7 @@ body {
 
 /* Encabezado con menú */
 header {
-    background-color: #218838;
+    background-color: #333;
     padding: 10px 0;
     position: fixed;
     width: 100%;

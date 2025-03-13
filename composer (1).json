@@ -1,8 +1,0 @@
-{
-    "require": {
-        "phpoffice/phpspreadsheet": "^2.2",
-        "tecnickcom/tcpdf": "^6.7",
-        "fpdf/fpdf": "^1.86",
-        "google/cloud-storage": "^1.43"
-    }
-}

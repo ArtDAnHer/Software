@@ -47,7 +47,9 @@ class Database {
                     AVG(boletos_perdidos) AS BoletoPerdidoAvg,
                     SUM(importe_boletos_perdidos) AS ImporteBoletosPerdidosAvg,
                     SUM(boletoNoUtil) AS BoletoNoUtilTotal,
-                    AVG(boletoNoUtil) AS BoletoNoUtilAvg
+                    AVG(boletoNoUtil) AS BoletoNoUtilAvg,
+                    SUM(apps) AS appsTotal,
+                    AVG(apps) AS appsAvg
                     
                 FROM boletos
                 WHERE Fecha BETWEEN :startDate AND :endDate
@@ -80,8 +82,8 @@ $estacionamientos = $db->getEstacionamientos();
 $data = $db->getTotalsAndAveragesByDateRange($startDate, $endDate, $estacionamiento);
 
 // Variables para los cálculos
-$totalImportes = $data['TOImporteTotal'] + $data['TPImporteTotal'] + $data['RImporteTotal'] + $data['CImporteTotal'] + $data['TImporteTotal'] + $data['TotalOtros'] + $data['ImporteBoletosPerdidosTotal'];
-$totalBoletos = $data['TOBoletoTotal'] + $data['TPBoletoTotal'] + $data['RBoletosTotal'] + $data['CBoletosTotal'] + $data['TBoletoTotal'] + $data['BoletoPerdidoTotal'] + $data['BoletoNoUtil'];
+$totalImportes = $data['TOImporteTotal'] + $data['TPImporteTotal'] + $data['RImporteTotal'] + $data['CImporteTotal'] + $data['TImporteTotal'] + $data['TotalOtros'] + $data['ImporteBoletosPerdidosTotal'] + $data['appsTotal'];
+$totalBoletos = $data['TOBoletoTotal'] + $data['TPBoletoTotal'] + $data['RBoletosTotal'] + $data['CBoletosTotal'] + $data['TBoletoTotal'] + $data['BoletoPerdidoTotal'] + $data['BoletoNoUtil'] ;
 $totalDepositos = $data['TotalDepositos'];
 
 $promedioTOBoletoUnitario = $data['TOBoletoTotal'] > 0 ? $data['TOImporteTotal'] / $data['TOBoletoTotal'] : 0;
@@ -244,6 +246,12 @@ form .required {
         </form>
     </div>
 
+<h3>Centro Republica del salvador</h3><br>
+                ordinario = autos<br>
+                preferencial = camionetas<br>
+                recobros = motos<br>
+                tolerancia = hotel<br>
+
     <table>
     <thead>
         <tr>
@@ -295,6 +303,14 @@ form .required {
             <td class="text-right"><?= number_format($data['TBoletoAvg'], 0, '.', ',') ?></td>
             <td class="text-right">$<?= number_format($data['TImporteAvg'], 2, '.', ',') ?></td>
             <td class="text-right">$<?= number_format($promedioTBoletoUnitario, 2, '.', ',') ?></td>
+        </tr>
+        <tr>
+            <td>Apps</td>
+            <td class="text-right">0</td>
+            <td class="text-right">$<?= number_format($data['appsTotal'], 2, '.', ',') ?></td>
+            <td class="text-right">0</td>
+            <td class="text-right">$<?= number_format($data['appsAvg'], 2, '.', ',') ?></td>
+            <td class="text-right">0</td>
         </tr>
         <tr>
             <td>Boletos Perdidos</td>

@@ -43,7 +43,8 @@ class Database {
                     SUM(TBoleto) AS TBoletoTotal, 
                     SUM(TImporte) AS TImporteTotal,
                     SUM(boletoNoUtil) AS boletoNoUtilTotal,
-                    AVG(boletoNoUtil) As boletoNoUtilAvg
+                    AVG(boletoNoUtil) As boletoNoUtilAvg,
+                    SUM(penciones_importe) As tpenciones
                 FROM boletos
                 WHERE Fecha BETWEEN :startDate AND :endDate
                 AND (:estacionamiento = 'Todo' OR Estacionamiento LIKE :estacionamiento)
@@ -93,14 +94,14 @@ $boletosPerdidosPrev = [];
 // Rellenar los arrays con datos del mes actual
 foreach ($data as $row) {
     $fechas[] = $row['Fecha'];
-    $importeTotal[] = $row['TOImporteTotal'] + $row['TPImporteTotal'] + $row['RImporteTotal'] + $row['CImporteTotal'];
+    $importeTotal[] = $row['TOImporteTotal'] + $row['TPImporteTotal'] + $row['RImporteTotal'] + $row['CImporteTotal'] + $row['tpenciones'];
     $boletajeTotal[] = $row['TOBoletoTotal'] + $row['TPBoletoTotal'] + $row['RBoletosTotal'] + $row['CBoletosTotal']+ $row['TBoletoTotal'] + $row['boletoNoUtilTotal'];
     $boletosPerdidos[] = $row['BoletosEmitidos'] - $row['BoletosControlados'];
 }
 
 // Rellenar los arrays con datos del mes anterior
 foreach ($prevMonthData as $row) {
-    $importeTotalPrev[] = $row['TOImporteTotal'] + $row['TPImporteTotal'] + $row['RImporteTotal'] + $row['CImporteTotal'];
+    $importeTotalPrev[] = $row['TOImporteTotal'] + $row['TPImporteTotal'] + $row['RImporteTotal'] + $row['CImporteTotal'] + $row['tpenciones'];
     $boletajeTotalPrev[] = $row['TOBoletoTotal'] + $row['TPBoletoTotal'] + $row['RBoletosTotal'] + $row['CBoletosTotal']+ $row['TBoletoTotal'] + $row['boletoNoUtilTotal'];
     $boletosPerdidosPrev[] = $row['BoletosEmitidos'] - $row['BoletosControlados'];
 }
@@ -269,13 +270,13 @@ form .required {
         <?php for ($i = 0; $i < count($fechas); $i++) : ?>
             <tr>
                 <td><?= htmlspecialchars($fechas[$i]) ?></td>
-                <td class="text-right"><?= number_format($importeTotal[$i], 0, ',', '.') ?></td>
-                <td class="text-right"><?= number_format($boletajeTotal[$i], 0, ',', '.') ?></td>
-                <td class="text-right"><?= number_format($boletosPerdidos[$i], 0, ',', '.') ?></td>
-                <td class="text-right"><?= isset($importeTotalPrev[$i]) ? htmlspecialchars($importeTotalPrev[$i]) : 'N/A' ?></td>
-                <td class="text-right"><?= isset($boletajeTotalPrev[$i]) ? htmlspecialchars($boletajeTotalPrev[$i]) : 'N/A' ?></td>
-                <td class="text-right"><?= isset($boletosPerdidosPrev[$i]) ? htmlspecialchars($boletosPerdidosPrev[$i]) : 'N/A' ?></td>
-                <td class="text-right"><?= isset($boletoNoUtil) ? htmlspecialchars($boletoNoUtil) : 'N/A' ?></td>
+                 <td class="text-right">$<?= number_format($importeTotal[$i], 0, '.', ',') ?></td>
+                <td class="text-right"><?= number_format($boletajeTotal[$i], 0, '.', ',') ?></td>
+                <td class="text-right"><?= number_format($boletosPerdidos[$i], 0, '.', ',') ?></td>
+                <td class="text-right">$<?= isset($importeTotalPrev[$i]) ? number_format($importeTotalPrev[$i], 0, '.', ',') : 'N/A' ?></td>
+                <td class="text-right"><?= isset($boletajeTotalPrev[$i]) ? number_format($boletajeTotalPrev[$i], 0, '.', ',') : 'N/A' ?></td>
+                <td class="text-right"><?= isset($boletosPerdidosPrev[$i]) ? number_format($boletosPerdidosPrev[$i], 0, '.', ',') : 'N/A' ?></td>
+                <td class="text-right"><?= isset($boletoNoUtil) ? number_format($boletoNoUtil, 0, '.', ',') : 'N/A' ?></td>
             </tr>
         <?php endfor; ?>
     </tbody>
